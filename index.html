@@ -831,48 +831,18 @@
             
             // 提交表单
             function submitForm() {
+                // 显示提交状态
                 submitText.textContent = '提交中...';
                 submitLoader.style.display = 'inline-block';
                 formStatus.textContent = '正在提交数据到Salesforce...';
                 formStatus.className = 'status-message status-info';
                 formStatus.style.display = 'block';
                 
-                // 创建表单数据副本用于提交
-                const formData = new FormData(form);
+                // 隐藏重复警告（如果有）
+                hideDuplicateWarning();
                 
-                // 使用AJAX提交表单以获取更多反馈
-                fetch(form.action, {
-                    method: 'POST',
-                    body: new URLSearchParams(formData),
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    }
-                })
-                .then(response => {
-                    if (response.ok) {
-                        // 显示成功消息
-                        formStatus.textContent = '提交成功! 正在跳转到感谢页面...';
-                        formStatus.className = 'status-message status-success';
-                        
-                        // 重定向到感谢页面
-                        setTimeout(() => {
-                            window.location.href = form.querySelector('[name="retURL"]').value;
-                        }, 2000);
-                    } else {
-                        // 显示错误消息
-                        formStatus.textContent = `提交失败: 服务器返回状态 ${response.status}`;
-                        formStatus.className = 'status-message status-error';
-                        submitText.textContent = '提交咨询';
-                        submitLoader.style.display = 'none';
-                    }
-                })
-                .catch(error => {
-                    // 显示错误消息
-                    formStatus.textContent = '提交失败: ' + error.message;
-                    formStatus.className = 'status-message status-error';
-                    submitText.textContent = '提交咨询';
-                    submitLoader.style.display = 'none';
-                });
+                // 直接提交表单（这将导致页面重定向）
+                form.submit();
             }
             
             // 显示重复警告
