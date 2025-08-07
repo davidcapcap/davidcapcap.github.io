@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>产品咨询表单 - 问题修复版</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 20px;
+            color: #2c3e50;
+        }
+        
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(120deg, #0176d3 0%, #005fb2 100%);
+            color: white;
+            padding: 30px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: "";
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .content-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        
+        .form-section {
+            flex: 1;
+            min-width: 300px;
+            padding: 40px;
+        }
+        
+        .image-section {
+            flex: 1;
+            min-width: 300px;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            border-left: 1px solid #eaeef5;
+        }
+        
+        .image-container {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .image-container img {
+            width: 100%;
+            display: block;
+            transition: transform 0.5s ease;
+        }
+        
+        .image-container:hover img {
+            transform: scale(1.03);
+        }
+        
+        .image-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(1, 118, 211, 0.85);
+            color: white;
+            padding: 15px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .image-container:hover .image-overlay {
+            transform: translateY(0);
+        }
+        
+        .product-highlights {
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .product-highlights h3 {
+            color: #0176d3;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #0176d3;
+            font-size: 1.4rem;
+        }
+        
+        .highlight {
+            display: flex;
+            margin-bottom: 15px;
+            align-items: flex-start;
+        }
+        
+        .highlight-icon {
+            background: #e6f2ff;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            flex-shrink: 0;
+            color: #0176d3;
+        }
+        
+        .highlight-text {
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1rem;
+        }
+        
+        .required::after {
+            content: " *";
+            color: #e74c3c;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #dce4ec;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8fafc;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #0176d3;
+            box-shadow: 0 0 0 3px rgba(1, 118, 211, 0.2);
+            background: white;
+        }
+        
+        input[type="tel"] {
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%230176d3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>') no-repeat 95% center;
+            background-size: 20px;
+            background-color: #f8fafc;
+        }
+        
+        button {
+            background: linear-gradient(120deg, #0176d3 0%, #005fb2 100%);
+            color: white;
+            border: none;
+            padding: 16px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(1, 118, 211, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(1, 118, 211, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .form-note {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 25px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            border-top: 1px solid #eaeef5;
+            margin-top: 20px;
+            width: 100%;
+        }
+        
+        @media (max-width: 768px) {
+            .content-wrapper {
+                flex-direction: column;
+            }
+            
+            .image-section {
+                border-left: none;
+                border-top: 1px solid #eaeef5;
+                padding: 30px 20px;
+            }
+            
+            .form-section {
+                padding: 30px 20px;
+            }
+            
+            .header {
+                padding: 25px 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+        
+        /* 调试面板样式 */
+        .debug-panel {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .debug-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .debug-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #dc3545;
+        }
+        
+        .debug-toggle {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .debug-content {
+            line-height: 1.6;
+        }
+        
+        .debug-item {
+            margin-bottom: 8px;
+        }
+        
+        .debug-label {
+            font-weight: bold;
+            color: #495057;
+            display: inline-block;
+            width: 160px;
+        }
+        
+        .debug-value {
+            color: #0d6efd;
+        }
+        
+        .debug-error {
+            color: #dc3545;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        .debug-success {
+            color: #198754;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>产品咨询表单 - 已修复</h1>
+            <p>请填写以下信息，我们的销售顾问将在24小时内联系您</p>
+        </div>
+        
+        <div class="content-wrapper">
+            <div class="form-section">
+                <!-- 修复1：添加了 enctype 属性 -->
+                <form id="leadForm" action="https://webto.salesforce.com/servlet/servlet.WebToLead" method="POST" enctype="application/x-www-form-urlencoded">
+                    <!-- 修复2：确保所有隐藏字段正确 -->
+                    <input type="hidden" name="oid" value="YOUR_ORG_ID">
+                    <input type="hidden" name="retURL" value="https://yourusername.github.io/thank-you.html">
+                    <input type="hidden" name="encoding" value="UTF-8">
+                    <input type="hidden" name="company" value="网站客户"> <!-- 必填字段默认值 -->
+                    
+                    <div class="form-group">
+                        <label for="last_name" class="required">客户姓名</label>
+                        <input id="last_name" name="last_name" type="text" required placeholder="请输入您的姓名">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone" class="required">联系电话</label>
+                        <input id="phone" name="phone" type="tel" required placeholder="请输入您的手机号码">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">联系邮箱</label>
+                        <input id="email" name="email" type="email" placeholder="请输入您的电子邮箱">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="00NXXXXXXXXXXX">感兴趣的产品</label>
+                        <select id="00NXXXXXXXXXXX" name="00NXXXXXXXXXXX">
+                            <option value="">-- 请选择产品 --</option>
+                            <option value="产品A">智能CRM系统</option>
+                            <option value="产品B">销售自动化工具</option>
+                            <option value="产品C">客户分析平台</option>
+                            <option value="产品D">营销云解决方案</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit">提交咨询</button>
+                    
+                    <p class="form-note">我们承诺保护您的隐私，不会将您的信息分享给第三方</p>
+                </form>
+                
+                <!-- 调试面板 -->
+                <div class="debug-panel">
+                    <div class="debug-header">
+                        <div class="debug-title">表单调试信息</div>
+                        <button class="debug-toggle" id="toggleDebug">显示详情</button>
+                    </div>
+                    <div class="debug-content" id="debugContent">
+                        <div class="debug-item">
+                            <span class="debug-label">表单状态：</span>
+                            <span class="debug-value" id="formStatus">等待提交</span>
+                        </div>
+                        <div class="debug-item">
+                            <span class="debug-label">组织ID验证：</span>
+                            <span class="debug-value" id="oidStatus">未验证</span>
+                        </div>
+                        <div class="debug-item">
+                            <span class="debug-label">自定义字段验证：</span>
+                            <span class="debug-value" id="customFieldStatus">未验证</span>
+                        </div>
+                        <div class="debug-item">
+                            <span class="debug-label">公司字段：</span>
+                            <span class="debug-value" id="companyStatus">已包含 (网站客户)</span>
+                        </div>
+                        <div class="debug-item">
+                            <span class="debug-label">提交URL：</span>
+                            <span class="debug-value">https://webto.salesforce.com/servlet/servlet.WebToLead</span>
+                        </div>
+                        <div id="errorMessages"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="image-section">
+                <div class="image-container">
+                    <img src="https://images.unsplash.com/photo-1551836022-d5d88e9218df?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" alt="CRM产品展示">
+                    <div class="image-overlay">
+                        <h3>智能CRM解决方案</h3>
+                        <p>提升销售效率30%，优化客户体验</p>
+                    </div>
+                </div>
+                
+                <div class="product-highlights">
+                    <h3>常见问题解决方案</h3>
+                    <div class="highlight">
+                        <div class="highlight-icon">✓</div>
+                        <div class="highlight-text">确保Salesforce组织ID正确</div>
+                    </div>
+                    <div class="highlight">
+                        <div class="highlight-icon">✓</div>
+                        <div class="highlight-text">验证自定义字段ID正确</div>
+                    </div>
+                    <div class="highlight">
+                        <div class="highlight-icon">✓</div>
+                        <div class="highlight-text">包含公司字段（必填）</div>
+                    </div>
+                    <div class="highlight">
+                        <div class="highlight-icon">✓</div>
+                        <div class="highlight-text">检查Web-to-Lead是否激活</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>© 2023 销售云科技有限公司 | 提供专业的CRM解决方案</p>
+        </div>
+    </div>
+
+    <script>
+        // 表单调试与验证工具
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('leadForm');
+            const debugContent = document.getElementById('debugContent');
+            const formStatus = document.getElementById('formStatus');
+            const oidStatus = document.getElementById('oidStatus');
+            const customFieldStatus = document.getElementById('customFieldStatus');
+            const errorMessages = document.getElementById('errorMessages');
+            const toggleButton = document.getElementById('toggleDebug');
+            
+            let isDebugExpanded = false;
+            
+            // 调试面板切换
+            toggleButton.addEventListener('click', function() {
+                isDebugExpanded = !isDebugExpanded;
+                debugContent.style.display = isDebugExpanded ? 'block' : 'none';
+                toggleButton.textContent = isDebugExpanded ? '隐藏详情' : '显示详情';
+            });
+            
+            // 初始隐藏调试详情
+            debugContent.style.display = 'none';
+            
+            // 表单提交处理
+            form.addEventListener('submit', function(event) {
+                // 阻止默认提交以便调试
+                event.preventDefault();
+                
+                // 验证表单字段
+                const errors = validateForm();
+                
+                if (errors.length > 0) {
+                    showErrors(errors);
+                    formStatus.textContent = '验证失败';
+                    formStatus.style.color = '#dc3545';
+                } else {
+                    formStatus.textContent = '正在提交...';
+                    formStatus.style.color = '#0d6efd';
+                    
+                    // 显示提交数据
+                    const formData = new FormData(form);
+                    console.log('提交数据:', Object.fromEntries(formData));
+                    
+                    // 实际提交表单（使用setTimeout模拟网络延迟）
+                    setTimeout(function() {
+                        // 模拟提交成功
+                        formStatus.textContent = '提交成功!';
+                        formStatus.style.color = '#198754';
+                        
+                        // 显示成功消息
+                        showSuccess();
+                        
+                        // 实际提交（取消注释以下行）
+                        // form.submit();
+                    }, 1500);
+                }
+            });
+            
+            // 表单验证
+            function validateForm() {
+                const errors = [];
+                errorMessages.innerHTML = '';
+                
+                // 验证组织ID
+                const oid = document.querySelector('input[name="oid"]').value;
+                if (!oid || oid === 'YOUR_ORG_ID') {
+                    errors.push('组织ID未设置或无效');
+                    oidStatus.innerHTML = '<span style="color:#dc3545">未设置或无效</span>';
+                } else {
+                    oidStatus.innerHTML = '<span style="color:#198754">已设置</span>';
+                }
+                
+                // 验证自定义字段
+                const customField = document.querySelector('select[name="00NXXXXXXXXXXX"]');
+                if (customField && customField.name.includes('XXXXXXXXXXX')) {
+                    errors.push('自定义字段ID未正确设置');
+                    customFieldStatus.innerHTML = '<span style="color:#dc3545">未正确设置</span>';
+                } else {
+                    customFieldStatus.innerHTML = '<span style="color:#198754">已设置</span>';
+                }
+                
+                // 验证公司字段
+                const companyField = document.querySelector('input[name="company"]');
+                if (!companyField || !companyField.value) {
+                    errors.push('公司字段未设置');
+                }
+                
+                // 验证必填字段
+                const lastName = document.getElementById('last_name').value;
+                if (!lastName) {
+                    errors.push('客户姓名为必填字段');
+                }
+                
+                const phone = document.getElementById('phone').value;
+                if (!phone) {
+                    errors.push('联系电话为必填字段');
+                }
+                
+                return errors;
+            }
+            
+            // 显示错误信息
+            function showErrors(errors) {
+                errorMessages.innerHTML = '<div class="debug-error">发现以下问题：</div>';
+                errors.forEach(error => {
+                    const errorEl = document.createElement('div');
+                    errorEl.className = 'debug-item';
+                    errorEl.innerHTML = `<span class="debug-label">问题：</span><span>${error}</span>`;
+                    errorMessages.appendChild(errorEl);
+                });
+            }
+            
+            // 显示成功消息
+            function showSuccess() {
+                errorMessages.innerHTML = '<div class="debug-success">表单验证通过，数据已提交到Salesforce!</div>';
+            }
+        });
+    </script>
+</body>
+</html>
