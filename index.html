@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>销售线索表单 - 重复记录检测</title>
+    <title>产品咨询表单 - Salesforce数据验证</title>
     <style>
         * {
             box-sizing: border-box;
@@ -346,7 +346,7 @@
             to { transform: rotate(360deg); }
         }
         
-        /* 重复记录状态指示器 */
+        /* 状态指示器 */
         .status-indicator {
             display: inline-block;
             width: 12px;
@@ -422,44 +422,42 @@
             color: #666;
         }
         
-        /* 检测结果面板 */
-        .detection-results {
-            margin-top: 20px;
-            border-radius: 8px;
-            padding: 15px;
+        /* Salesforce 连接状态 */
+        .connection-status {
             background: #f8fafc;
-            border: 1px solid #eaeef5;
-        }
-        
-        .detection-header {
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 15px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eaeef5;
+            font-size: 0.85rem;
         }
         
-        .detection-title {
-            font-weight: 600;
-            color: #0176d3;
-            font-size: 1.1rem;
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
         }
         
-        .detection-status {
-            font-size: 0.9rem;
-            padding: 3px 8px;
-            border-radius: 12px;
-            background: #e6f2ff;
-            color: #0176d3;
+        .connected {
+            background-color: #4CAF50;
+        }
+        
+        .disconnected {
+            background-color: #f44336;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>销售线索表单</h1>
+            <h1>产品咨询表单</h1>
             <p>请填写以下信息，我们的销售顾问将在24小时内联系您</p>
+            <div class="connection-status" id="connectionStatus">
+                <div class="status-dot connected"></div>
+                <span>已连接到Salesforce</span>
+            </div>
         </div>
         
         <div class="content-wrapper">
@@ -504,24 +502,8 @@
                     <!-- 重复记录警告 -->
                     <div class="duplicate-warning" id="duplicateWarning">
                         <h4>重复记录警告</h4>
-                        <p id="duplicateMessage">电话或邮箱已经注册，请换一个新的号码或邮箱注册</p>
+                        <p id="duplicateMessage">系统中已存在相同联系方式的记录</p>
                         <div class="duplicate-list" id="duplicateList"></div>
-                    </div>
-                    
-                    <!-- 检测结果面板 -->
-                    <div class="detection-results">
-                        <div class="detection-header">
-                            <div class="detection-title">重复记录检测结果</div>
-                            <div class="detection-status" id="overallStatus">未检测</div>
-                        </div>
-                        <div class="highlight">
-                            <div class="highlight-icon">🔍</div>
-                            <div class="highlight-text">我们检测到系统中存在匹配的联系方式</div>
-                        </div>
-                        <div class="highlight">
-                            <div class="highlight-icon">🔄</div>
-                            <div class="highlight-text">请修改电话或邮箱以避免创建重复记录</div>
-                        </div>
                     </div>
                     
                     <button type="submit" id="submitBtn">
@@ -549,7 +531,7 @@
                     <h3>表单验证功能</h3>
                     <div class="highlight">
                         <div class="highlight-icon">✓</div>
-                        <div class="highlight-text">实时检查重复联系方式</div>
+                        <div class="highlight-text">实时Salesforce数据验证</div>
                     </div>
                     <div class="highlight">
                         <div class="highlight-icon">✓</div>
@@ -586,26 +568,28 @@
             const duplicateWarning = document.getElementById('duplicateWarning');
             const duplicateMessage = document.getElementById('duplicateMessage');
             const duplicateList = document.getElementById('duplicateList');
-            const overallStatus = document.getElementById('overallStatus');
             const phoneStatus = document.getElementById('phoneStatus');
             const emailStatus = document.getElementById('emailStatus');
+            const connectionStatus = document.getElementById('connectionStatus');
             
             const phoneInput = document.getElementById('phone');
             const emailInput = document.getElementById('email');
             const phoneError = document.getElementById('phoneError');
             const emailError = document.getElementById('emailError');
             
+            // Salesforce REST API端点配置
+            const SALESFORCE_API_ENDPOINT = '/services/apexrest/CheckDuplicateLeads';
             // 检查重复记录的计时器
             let checkTimer;
             // 重复记录数据
             let duplicateRecords = [];
-            // 检测状态
-            let detectionStatus = 'idle';
             
             // 电话号码输入事件
             phoneInput.addEventListener('input', function() {
                 clearTimeout(checkTimer);
-                if(phoneInput.value.length > 5) {
+                validatePhoneFormat();
+                
+                if(phoneInput.value.length >= 7) {
                     updateStatus('phone', 'checking', '检查中...');
                     checkTimer = setTimeout(() => checkForDuplicates('phone'), 800);
                 } else {
@@ -617,7 +601,9 @@
             // 邮箱输入事件
             emailInput.addEventListener('input', function() {
                 clearTimeout(checkTimer);
-                if(emailInput.value.length > 5) {
+                validateEmailFormat();
+                
+                if(emailInput.value.length >= 5) {
                     updateStatus('email', 'checking', '检查中...');
                     checkTimer = setTimeout(() => checkForDuplicates('email'), 800);
                 } else {
@@ -648,6 +634,38 @@
                 submitForm();
             });
             
+            // 验证电话号码格式
+            function validatePhoneFormat() {
+                const phone = phoneInput.value.trim();
+                phoneError.style.display = 'none';
+                
+                if(!phone) return true;
+                
+                if(!/^1[3-9]\d{9}$/.test(phone)) {
+                    phoneError.textContent = '请输入有效的手机号码（11位，以1开头，第二位为3-9）';
+                    phoneError.style.display = 'block';
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            // 验证邮箱格式
+            function validateEmailFormat() {
+                const email = emailInput.value.trim();
+                emailError.style.display = 'none';
+                
+                if(!email) return true;
+                
+                if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    emailError.textContent = '请输入有效的电子邮箱';
+                    emailError.style.display = 'block';
+                    return false;
+                }
+                
+                return true;
+            }
+            
             // 验证必填字段
             function validateRequiredFields() {
                 let isValid = true;
@@ -665,23 +683,18 @@
                     isValid = false;
                 }
                 
-                // 验证电话
+                // 验证电话格式
+                isValid = validatePhoneFormat() && isValid;
+                
+                // 验证电话必填
                 if(!phoneInput.value.trim()) {
                     phoneError.textContent = '联系电话为必填字段';
-                    phoneError.style.display = 'block';
-                    isValid = false;
-                } else if(!/^1[3-9]\d{9}$/.test(phoneInput.value)) {
-                    phoneError.textContent = '请输入有效的手机号码';
                     phoneError.style.display = 'block';
                     isValid = false;
                 }
                 
                 // 验证邮箱格式
-                if(emailInput.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value)) {
-                    emailError.textContent = '请输入有效的电子邮箱';
-                    emailError.style.display = 'block';
-                    isValid = false;
-                }
+                isValid = validateEmailFormat() && isValid;
                 
                 return isValid;
             }
@@ -707,23 +720,13 @@
                 `;
             }
             
-            // 更新整体检测状态
-            function updateOverallStatus() {
-                const hasDuplicates = duplicateRecords.length > 0;
-                overallStatus.textContent = hasDuplicates ? '发现重复记录' : '无重复记录';
-                overallStatus.style.backgroundColor = hasDuplicates ? '#ffebee' : '#e8f5e9';
-                overallStatus.style.color = hasDuplicates ? '#f44336' : '#4CAF50';
-            }
-            
-            // 检查重复记录
+            // 检查重复记录（调用Salesforce API）
             async function checkForDuplicates(source) {
                 const phone = phoneInput.value.trim();
                 const email = emailInput.value.trim();
                 
                 // 如果电话和邮箱都为空，则不检查
-                if((!phone || phone.length < 5) && (!email || email.length < 5)) {
-                    duplicateRecords = [];
-                    updateOverallStatus();
+                if((!phone || phone.length < 7) && (!email || email.length < 5)) {
                     return false;
                 }
                 
@@ -731,27 +734,40 @@
                 if(source === 'submit') {
                     submitText.textContent = '检查重复记录...';
                     submitLoader.style.display = 'inline-block';
-                    formStatus.textContent = '正在检查重复记录...';
+                    formStatus.textContent = '正在检查Salesforce中的重复记录...';
                     formStatus.className = 'status-message status-info';
                     formStatus.style.display = 'block';
                 }
                 
                 try {
-                    // 在实际应用中，这里应该调用您的服务器端点
-                    // 该端点会查询Salesforce检查重复记录
-                    // 以下是模拟实现
+                    // 构建请求体
+                    const requestBody = {
+                        phone: phone || null,
+                        email: email || null
+                    };
                     
-                    // 模拟API调用延迟
-                    await new Promise(resolve => setTimeout(resolve, 800));
+                    // 调用Salesforce REST API
+                    const response = await fetch(SALESFORCE_API_ENDPOINT, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
                     
-                    // 模拟重复记录检查结果
-                    // 在实际应用中，这应该是一个真实的API调用
-                    const isDuplicate = Math.random() > 0.5; // 50%的几率模拟重复
+                    if (!response.ok) {
+                        throw new Error(`Salesforce API错误: ${response.status}`);
+                    }
                     
-                    if(isDuplicate) {
-                        // 生成模拟的重复记录
-                        duplicateRecords = generateMockDuplicates(phone, email);
-                        
+                    const result = await response.json();
+                    
+                    if (result.success === false) {
+                        throw new Error(result.message || 'Salesforce返回未知错误');
+                    }
+                    
+                    duplicateRecords = result.duplicates || [];
+                    
+                    if (duplicateRecords.length > 0) {
                         // 更新状态
                         if(phone) {
                             updateStatus('phone', 'duplicate', '电话已存在系统中');
@@ -761,9 +777,6 @@
                             updateStatus('email', 'duplicate', '邮箱已存在系统中');
                         }
                         
-                        // 更新整体状态
-                        updateOverallStatus();
-                        
                         if(source === 'submit') {
                             submitText.textContent = '提交咨询';
                             submitLoader.style.display = 'none';
@@ -771,9 +784,6 @@
                         
                         return true;
                     } else {
-                        // 没有重复记录
-                        duplicateRecords = [];
-                        
                         // 更新状态
                         if(phone) {
                             updateStatus('phone', 'available', '电话可用');
@@ -782,9 +792,6 @@
                         if(email) {
                             updateStatus('email', 'available', '邮箱可用');
                         }
-                        
-                        // 更新整体状态
-                        updateOverallStatus();
                         
                         if(source === 'submit') {
                             // 如果没有重复，继续提交
@@ -795,50 +802,31 @@
                     }
                 } catch (error) {
                     console.error('检查重复记录时出错:', error);
-                    duplicateRecords = [];
-                    updateOverallStatus();
+                    
+                    // 更新连接状态
+                    connectionStatus.innerHTML = `
+                        <div class="status-dot disconnected"></div>
+                        <span>Salesforce连接失败: ${error.message}</span>
+                    `;
                     
                     if(source === 'submit') {
-                        formStatus.textContent = '检查重复记录时出错，请稍后再试';
+                        formStatus.textContent = '检查重复记录时出错: ' + error.message;
                         formStatus.className = 'status-message status-error';
                         formStatus.style.display = 'block';
                         submitText.textContent = '提交咨询';
                         submitLoader.style.display = 'none';
+                    } else {
+                        // 对于非提交检查，恢复状态
+                        if(phone) {
+                            updateStatus('phone', 'idle', '');
+                        }
+                        if(email) {
+                            updateStatus('email', 'idle', '');
+                        }
                     }
                     
                     return false;
                 }
-            }
-            
-            // 生成模拟的重复记录
-            function generateMockDuplicates(phone, email) {
-                const records = [];
-                const names = ['张伟', '王芳', '李明', '刘洋', '陈晓'];
-                const statuses = ['新线索', '已联系', '已转化', '已关闭'];
-                const sources = ['网站表单', '展会展台', '电话营销', '客户推荐'];
-                
-                // 生成1-3条重复记录
-                const count = Math.floor(Math.random() * 3) + 1;
-                
-                for(let i = 0; i < count; i++) {
-                    const name = names[Math.floor(Math.random() * names.length)];
-                    const status = statuses[Math.floor(Math.random() * statuses.length)];
-                    const source = sources[Math.floor(Math.random() * sources.length)];
-                    const createdDate = new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000);
-                    
-                    records.push({
-                        id: '00Q' + Math.random().toString(36).substr(2, 15).toUpperCase(),
-                        name: name,
-                        phone: phone,
-                        email: email,
-                        status: status,
-                        source: source,
-                        createdDate: createdDate.toLocaleDateString('zh-CN'),
-                        owner: '销售团队'
-                    });
-                }
-                
-                return records;
             }
             
             // 提交表单
@@ -900,11 +888,11 @@
                         item.innerHTML = `
                             <div class="duplicate-icon">⚠️</div>
                             <div class="duplicate-details">
-                                <div class="duplicate-name">${record.name}</div>
+                                <div class="duplicate-name">${record.Name || '未命名记录'}</div>
                                 <div class="duplicate-info">
-                                    <span>电话: ${record.phone}</span> | 
-                                    <span>状态: ${record.status}</span> | 
-                                    <span>创建: ${record.createdDate}</span>
+                                    ${record.Phone ? `<span>电话: ${record.Phone}</span>` : ''}
+                                    ${record.Email ? `<span>邮箱: ${record.Email}</span>` : ''}
+                                    <span>状态: ${record.Status || '未知'}</span>
                                 </div>
                             </div>
                         `;
@@ -914,15 +902,6 @@
                     duplicateList.innerHTML = '<div class="duplicate-item">未找到具体记录</div>';
                 }
                 
-                // 根据输入决定显示哪条消息
-                if(phoneInput.value && emailInput.value) {
-                    duplicateMessage.textContent = '电话或邮箱已经注册，请换一个新的号码或邮箱';
-                } else if(phoneInput.value) {
-                    duplicateMessage.textContent = '该电话号码已注册，请使用其他号码';
-                } else {
-                    duplicateMessage.textContent = '该电子邮箱已注册，请使用其他邮箱';
-                }
-                
                 // 滚动到警告位置
                 duplicateWarning.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
@@ -930,6 +909,32 @@
             // 隐藏重复警告
             function hideDuplicateWarning() {
                 duplicateWarning.style.display = 'none';
+            }
+            
+            // 初始检查Salesforce连接状态
+            checkConnectionStatus();
+            
+            // 检查Salesforce连接状态
+            async function checkConnectionStatus() {
+                try {
+                    const response = await fetch(SALESFORCE_API_ENDPOINT, {
+                        method: 'HEAD'
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('连接测试失败');
+                    }
+                    
+                    connectionStatus.innerHTML = `
+                        <div class="status-dot connected"></div>
+                        <span>已连接到Salesforce</span>
+                    `;
+                } catch (error) {
+                    connectionStatus.innerHTML = `
+                        <div class="status-dot disconnected"></div>
+                        <span>Salesforce连接失败: ${error.message}</span>
+                    `;
+                }
             }
         });
     </script>
