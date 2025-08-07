@@ -347,33 +347,6 @@
         }
         
         /* 状态指示器 */
-        .status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-        
-        .status-available {
-            background-color: #4CAF50;
-        }
-        
-        .status-duplicate {
-            background-color: #f44336;
-        }
-        
-        .status-checking {
-            background-color: #FFC107;
-            animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.4; }
-            100% { opacity: 1; }
-        }
-        
         .status-text {
             font-size: 0.85rem;
             margin-top: 5px;
@@ -420,20 +393,6 @@
         .duplicate-info {
             font-size: 0.8rem;
             color: #666;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        
-        .duplicate-info span {
-            display: flex;
-            align-items: center;
-        }
-        
-        .duplicate-info span:before {
-            content: "•";
-            margin-right: 5px;
-            font-weight: bold;
         }
         
         /* Salesforce 连接状态 */
@@ -462,18 +421,29 @@
             background-color: #f44336;
         }
         
-        /* 重复信息提示 */
-        .duplicate-hint {
-            display: flex;
-            align-items: center;
-            margin-top: 5px;
-            font-size: 0.85rem;
-            color: #e67e22;
+        /* 重复错误样式 */
+        .duplicate-error {
+            border-color: #e74c3c !important;
+            background-color: #fffafa !important;
         }
         
-        .duplicate-hint .icon {
-            margin-right: 5px;
-            font-weight: bold;
+        .duplicate-error:focus {
+            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2) !important;
+        }
+        
+        .duplicate-error-message {
+            display: block !important;
+            background-color: #fff6f6;
+            border-left: 3px solid #e74c3c;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-top: 8px;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -505,23 +475,15 @@
                     <div class="form-group">
                         <label for="phone" class="required">联系电话</label>
                         <input id="phone" name="phone" type="tel" required placeholder="请输入您的手机号码">
+                        <div class="error-message duplicate-error-message" id="phoneDuplicateError" style="display: none;">该电话已存在系统中，请使用新的电话号码</div>
                         <div class="error-message" id="phoneError"></div>
-                        <div class="status-text" id="phoneStatus"></div>
-                        <div class="duplicate-hint" id="phoneDuplicateHint" style="display:none;">
-                            <span class="icon">⚠️</span>
-                            <span>该电话已在系统中存在</span>
-                        </div>
                     </div>
                     
                     <div class="form-group">
                         <label for="email">联系邮箱</label>
                         <input id="email" name="email" type="email" placeholder="请输入您的电子邮箱">
+                        <div class="error-message duplicate-error-message" id="emailDuplicateError" style="display: none;">该邮箱已存在系统中，请使用新的电子邮箱</div>
                         <div class="error-message" id="emailError"></div>
-                        <div class="status-text" id="emailStatus"></div>
-                        <div class="duplicate-hint" id="emailDuplicateHint" style="display:none;">
-                            <span class="icon">⚠️</span>
-                            <span>该邮箱已在系统中存在</span>
-                        </div>
                     </div>
                     
                     <div class="form-group">
@@ -533,13 +495,6 @@
                             <option value="产品C">客户分析平台</option>
                             <option value="产品D">营销云解决方案</option>
                         </select>
-                    </div>
-                    
-                    <!-- 重复记录警告 -->
-                    <div class="duplicate-warning" id="duplicateWarning">
-                        <h4>重复记录警告</h4>
-                        <p id="duplicateMessage">系统中已存在相同联系方式的记录</p>
-                        <div class="duplicate-list" id="duplicateList"></div>
                     </div>
                     
                     <button type="submit" id="submitBtn">
@@ -567,7 +522,7 @@
                     <h3>表单验证功能</h3>
                     <div class="highlight">
                         <div class="highlight-icon">✓</div>
-                        <div class="highlight-text">实时Salesforce数据验证</div>
+                        <div class="highlight-text">Salesforce数据验证</div>
                     </div>
                     <div class="highlight">
                         <div class="highlight-icon">✓</div>
@@ -583,7 +538,7 @@
                     </div>
                     <div class="highlight">
                         <div class="highlight-icon">✓</div>
-                        <div class="highlight-text">显示匹配的现有记录</div>
+                        <div class="highlight-text">即时错误反馈</div>
                     </div>
                 </div>
             </div>
@@ -601,75 +556,60 @@
             const submitText = document.getElementById('submitText');
             const submitLoader = document.getElementById('submitLoader');
             const formStatus = document.getElementById('formStatus');
-            const duplicateWarning = document.getElementById('duplicateWarning');
-            const duplicateMessage = document.getElementById('duplicateMessage');
-            const duplicateList = document.getElementById('duplicateList');
-            const phoneStatus = document.getElementById('phoneStatus');
-            const emailStatus = document.getElementById('emailStatus');
-            const phoneDuplicateHint = document.getElementById('phoneDuplicateHint');
-            const emailDuplicateHint = document.getElementById('emailDuplicateHint');
             const connectionStatus = document.getElementById('connectionStatus');
             
             const phoneInput = document.getElementById('phone');
             const emailInput = document.getElementById('email');
             const phoneError = document.getElementById('phoneError');
             const emailError = document.getElementById('emailError');
+            const phoneDuplicateError = document.getElementById('phoneDuplicateError');
+            const emailDuplicateError = document.getElementById('emailDuplicateError');
             
-       
+            // Salesforce REST API端点配置
             const SALESFORCE_API_ENDPOINT = '/services/apexrest/CheckDuplicateLeads';
-        
-            let checkTimer;
-   
-            let duplicateRecords = [];
             
- 
-            phoneInput.addEventListener('input', function() {
-                clearTimeout(checkTimer);
-                validatePhoneFormat();
-                hideDuplicateHints();
-                
-                if(phoneInput.value.length >= 7) {
-                    updateStatus('phone', 'checking', '检查中...');
-                    checkTimer = setTimeout(() => checkForDuplicates('phone'), 800);
-                } else {
-                    updateStatus('phone', 'idle', '');
-                }
-                hideDuplicateWarning();
-            });
-            
-
-            emailInput.addEventListener('input', function() {
-                clearTimeout(checkTimer);
-                validateEmailFormat();
-                hideDuplicateHints();
-                
-                if(emailInput.value.length >= 5) {
-                    updateStatus('email', 'checking', '检查中...');
-                    checkTimer = setTimeout(() => checkForDuplicates('email'), 800);
-                } else {
-                    updateStatus('email', 'idle', '');
-                }
-                hideDuplicateWarning();
-            });
-            
-
+            // 表单提交处理
             form.addEventListener('submit', async function(event) {
                 event.preventDefault();
-
+                
+                // 重置错误状态
+                resetErrors();
+                
+                // 验证必填字段
                 if(!validateRequiredFields()) {
                     return;
                 }
-
-                const hasDuplicates = await checkForDuplicates('submit');
+                
+                // 检查重复记录
+                const hasDuplicates = await checkForDuplicates();
                 
                 if(hasDuplicates) {
-
-                    showDuplicateWarning();
+                    // 显示重复错误
+                    showDuplicateErrors();
                     return;
                 }
+                
+                // 提交表单
                 submitForm();
             });
-
+            
+            // 重置错误状态
+            function resetErrors() {
+                // 移除错误样式
+                phoneInput.classList.remove('duplicate-error');
+                emailInput.classList.remove('duplicate-error');
+                
+                // 隐藏错误消息
+                phoneDuplicateError.style.display = 'none';
+                emailDuplicateError.style.display = 'none';
+                
+                // 重置其他错误消息
+                document.querySelectorAll('.error-message').forEach(el => {
+                    el.style.display = 'none';
+                });
+            }
+            
+            // 验证电话号码格式
             function validatePhoneFormat() {
                 const phone = phoneInput.value.trim();
                 phoneError.style.display = 'none';
@@ -684,7 +624,8 @@
                 
                 return true;
             }
-
+            
+            // 验证邮箱格式
             function validateEmailFormat() {
                 const email = emailInput.value.trim();
                 emailError.style.display = 'none';
@@ -699,76 +640,55 @@
                 
                 return true;
             }
-
+            
+            // 验证必填字段
             function validateRequiredFields() {
                 let isValid = true;
-
-                document.querySelectorAll('.error-message').forEach(el => {
-                    el.style.display = 'none';
-                });
-
+                
+                // 验证姓名
                 const nameInput = document.getElementById('last_name');
                 if(!nameInput.value.trim()) {
                     document.getElementById('nameError').textContent = '客户姓名为必填字段';
                     document.getElementById('nameError').style.display = 'block';
                     isValid = false;
                 }
-
+                
+                // 验证电话格式
                 isValid = validatePhoneFormat() && isValid;
-
+                
+                // 验证电话必填
                 if(!phoneInput.value.trim()) {
                     phoneError.textContent = '联系电话为必填字段';
                     phoneError.style.display = 'block';
                     isValid = false;
                 }
-
+                
+                // 验证邮箱格式
                 isValid = validateEmailFormat() && isValid;
                 
                 return isValid;
             }
-
-            function updateStatus(field, status, message) {
-                const statusElement = field === 'phone' ? phoneStatus : emailStatus;
-                const indicatorClass = {
-                    'idle': '',
-                    'checking': 'status-checking',
-                    'duplicate': 'status-duplicate',
-                    'available': 'status-available'
-                }[status];
-                
-                if (status === 'idle') {
-                    statusElement.innerHTML = '';
-                    return;
-                }
-                
-                statusElement.innerHTML = `
-                    <span class="status-indicator ${indicatorClass}"></span>
-                    ${message}
-                `;
-            }
-
-            async function checkForDuplicates(source) {
+            
+            // 检查重复记录（调用Salesforce API）
+            async function checkForDuplicates() {
                 const phone = phoneInput.value.trim();
                 const email = emailInput.value.trim();
-
-                if((!phone || phone.length < 7) && (!email || email.length < 5)) {
-                    return false;
-                }
-
-                if(source === 'submit') {
-                    submitText.textContent = '检查重复记录...';
-                    submitLoader.style.display = 'inline-block';
-                    formStatus.textContent = '正在检查Salesforce中的重复记录...';
-                    formStatus.className = 'status-message status-info';
-                    formStatus.style.display = 'block';
-                }
+                
+                // 显示加载状态
+                submitText.textContent = '检查重复记录...';
+                submitLoader.style.display = 'inline-block';
+                formStatus.textContent = '正在检查Salesforce中的重复记录...';
+                formStatus.className = 'status-message status-info';
+                formStatus.style.display = 'block';
                 
                 try {
+                    // 构建请求体
                     const requestBody = {
                         phone: phone || null,
                         email: email || null
                     };
-
+                    
+                    // 调用Salesforce REST API
                     const response = await fetch(SALESFORCE_API_ENDPOINT, {
                         method: 'POST',
                         headers: {
@@ -785,153 +705,67 @@
                     
                     if (result.success === false) {
                         throw new Error(result.message || 'Salesforce返回未知错误');
-                    }     
-                    duplicateRecords = result.duplicates || [];
+                    }
                     
-                    if (duplicateRecords.length > 0) {
-
-                        if(phone) {
-                            updateStatus('phone', 'duplicate', '电话已存在系统中');
-                            phoneDuplicateHint.style.display = 'flex';
-                        }
-                        
-                        if(email) {
-                            updateStatus('email', 'duplicate', '邮箱已存在系统中');
-                            emailDuplicateHint.style.display = 'flex';
-                        }
-                        
-                        if(source === 'submit') {
-                            submitText.textContent = '提交咨询';
-                            submitLoader.style.display = 'none';
-                        }
-                        
+                    if (result.duplicates && result.duplicates.length > 0) {
+                        // 检测到重复记录
+                        submitText.textContent = '提交咨询';
+                        submitLoader.style.display = 'none';
+                        formStatus.style.display = 'none';
                         return true;
                     } else {
-                        if(phone) {
-                            updateStatus('phone', 'available', '电话可用');
-                            phoneDuplicateHint.style.display = 'none';
-                        }
-                        
-                        if(email) {
-                            updateStatus('email', 'available', '邮箱可用');
-                            emailDuplicateHint.style.display = 'none';
-                        }
-                        
-                        if(source === 'submit') {
-                            submitForm();
-                        }
-                        
+                        // 没有重复记录
                         return false;
                     }
                 } catch (error) {
                     console.error('检查重复记录时出错:', error);
+                    
+                    // 更新连接状态
                     connectionStatus.innerHTML = `
                         <div class="status-dot disconnected"></div>
                         <span>Salesforce连接失败: ${error.message}</span>
                     `;
                     
-                    if(source === 'submit') {
-                        formStatus.textContent = '检查重复记录时出错: ' + error.message;
-                        formStatus.className = 'status-message status-error';
-                        formStatus.style.display = 'block';
-                        submitText.textContent = '提交咨询';
-                        submitLoader.style.display = 'none';
-                    } else {
-                        // 对于非提交检查，恢复状态
-                        if(phone) {
-                            updateStatus('phone', 'idle', '');
-                        }
-                        if(email) {
-                            updateStatus('email', 'idle', '');
-                        }
-                    }
+                    formStatus.textContent = '检查重复记录时出错: ' + error.message;
+                    formStatus.className = 'status-message status-error';
+                    formStatus.style.display = 'block';
+                    submitText.textContent = '提交咨询';
+                    submitLoader.style.display = 'none';
                     
                     return false;
                 }
             }
-
+            
+            // 显示重复错误
+            function showDuplicateErrors() {
+                // 添加错误样式
+                phoneInput.classList.add('duplicate-error');
+                emailInput.classList.add('duplicate-error');
+                
+                // 显示错误消息
+                phoneDuplicateError.style.display = 'block';
+                emailDuplicateError.style.display = 'block';
+                
+                // 滚动到第一个错误字段
+                phoneInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // 显示错误提示
+                formStatus.textContent = '系统检测到重复记录，请修正后重新提交';
+                formStatus.className = 'status-message status-error';
+                formStatus.style.display = 'block';
+            }
+            
+            // 提交表单
             function submitForm() {
-
                 submitText.textContent = '提交中...';
                 submitLoader.style.display = 'inline-block';
                 formStatus.textContent = '正在提交数据到Salesforce...';
                 formStatus.className = 'status-message status-info';
                 formStatus.style.display = 'block';
-                hideDuplicateWarning();
+                
+                // 使用传统表单提交方式
                 form.submit();
             }
-            function showDuplicateWarning() {
-                duplicateWarning.style.display = 'block';
-                if(duplicateRecords.length > 0) {
-                    duplicateList.innerHTML = '';
-                    duplicateRecords.forEach(record => {
-                        const item = document.createElement('div');
-                        item.className = 'duplicate-item';
-                        item.innerHTML = `
-                            <div class="duplicate-icon">⚠️</div>
-                            <div class="duplicate-details">
-                                <div class="duplicate-name">${record.Name || '未命名记录'}</div>
-                                <div class="duplicate-info">
-                                    ${record.Phone ? `<span>电话: ${record.Phone}</span>` : ''}
-                                    ${record.Email ? `<span>邮箱: ${record.Email}</span>` : ''}
-                                    <span>状态: ${record.Status || '未知'}</span>
-                                </div>
-                            </div>
-                        `;
-                        duplicateList.appendChild(item);
-                    });
-                } else {
-                    duplicateList.innerHTML = '<div class="duplicate-item">未找到具体记录</div>';
-                }
-                
-
-                duplicateWarning.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-            
-
-            function hideDuplicateWarning() {
-                duplicateWarning.style.display = 'none';
-            }
-            
-
-            function hideDuplicateHints() {
-                phoneDuplicateHint.style.display = 'none';
-                emailDuplicateHint.style.display = 'none';
-            }
-            
-
-            checkConnectionStatus();
-
-            async function checkConnectionStatus() {
-                try {
-                    const response = await fetch(SALESFORCE_API_ENDPOINT, {
-                        method: 'HEAD'
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error('连接测试失败');
-                    }
-                    
-                    connectionStatus.innerHTML = `
-                        <div class="status-dot connected"></div>
-                        <span>已连接到Salesforce</span>
-                    `;
-                } catch (error) {
-                    connectionStatus.innerHTML = `
-                        <div class="status-dot disconnected"></div>
-                        <span>Salesforce连接失败: ${error.message}</span>
-                    `;
-                }
-            }
-
-            setTimeout(() => {
-                document.getElementById('last_name').value = '王先生';
-                document.getElementById('phone').value = '13800138000';
-                document.getElementById('email').value = 'zhang@example.com';
-                document.getElementById('00NIU00000LPpgc2AD').value = '产品A';
-
-                simulateDuplicateCheck();
-            }, 1000);
         });
     </script>
 </body>
