@@ -615,14 +615,14 @@
             const phoneError = document.getElementById('phoneError');
             const emailError = document.getElementById('emailError');
             
-            // Salesforce REST API端点配置
+       
             const SALESFORCE_API_ENDPOINT = '/services/apexrest/CheckDuplicateLeads';
-            // 检查重复记录的计时器
+        
             let checkTimer;
-            // 重复记录数据
+   
             let duplicateRecords = [];
             
-            // 电话号码输入事件
+ 
             phoneInput.addEventListener('input', function() {
                 clearTimeout(checkTimer);
                 validatePhoneFormat();
@@ -637,7 +637,7 @@
                 hideDuplicateWarning();
             });
             
-            // 邮箱输入事件
+
             emailInput.addEventListener('input', function() {
                 clearTimeout(checkTimer);
                 validateEmailFormat();
@@ -652,29 +652,24 @@
                 hideDuplicateWarning();
             });
             
-            // 表单提交处理
+
             form.addEventListener('submit', async function(event) {
                 event.preventDefault();
-                
-                // 验证必填字段
+
                 if(!validateRequiredFields()) {
                     return;
                 }
-                
-                // 检查重复记录
+
                 const hasDuplicates = await checkForDuplicates('submit');
                 
                 if(hasDuplicates) {
-                    // 显示重复警告
+
                     showDuplicateWarning();
                     return;
                 }
-                
-                // 提交表单
                 submitForm();
             });
-            
-            // 验证电话号码格式
+
             function validatePhoneFormat() {
                 const phone = phoneInput.value.trim();
                 phoneError.style.display = 'none';
@@ -689,8 +684,7 @@
                 
                 return true;
             }
-            
-            // 验证邮箱格式
+
             function validateEmailFormat() {
                 const email = emailInput.value.trim();
                 emailError.style.display = 'none';
@@ -705,41 +699,34 @@
                 
                 return true;
             }
-            
-            // 验证必填字段
+
             function validateRequiredFields() {
                 let isValid = true;
-                
-                // 重置错误信息
+
                 document.querySelectorAll('.error-message').forEach(el => {
                     el.style.display = 'none';
                 });
-                
-                // 验证姓名
+
                 const nameInput = document.getElementById('last_name');
                 if(!nameInput.value.trim()) {
                     document.getElementById('nameError').textContent = '客户姓名为必填字段';
                     document.getElementById('nameError').style.display = 'block';
                     isValid = false;
                 }
-                
-                // 验证电话格式
+
                 isValid = validatePhoneFormat() && isValid;
-                
-                // 验证电话必填
+
                 if(!phoneInput.value.trim()) {
                     phoneError.textContent = '联系电话为必填字段';
                     phoneError.style.display = 'block';
                     isValid = false;
                 }
-                
-                // 验证邮箱格式
+
                 isValid = validateEmailFormat() && isValid;
                 
                 return isValid;
             }
-            
-            // 更新状态指示器
+
             function updateStatus(field, status, message) {
                 const statusElement = field === 'phone' ? phoneStatus : emailStatus;
                 const indicatorClass = {
@@ -759,18 +746,15 @@
                     ${message}
                 `;
             }
-            
-            // 检查重复记录（调用Salesforce API）
+
             async function checkForDuplicates(source) {
                 const phone = phoneInput.value.trim();
                 const email = emailInput.value.trim();
-                
-                // 如果电话和邮箱都为空，则不检查
+
                 if((!phone || phone.length < 7) && (!email || email.length < 5)) {
                     return false;
                 }
-                
-                // 显示加载状态
+
                 if(source === 'submit') {
                     submitText.textContent = '检查重复记录...';
                     submitLoader.style.display = 'inline-block';
@@ -780,13 +764,11 @@
                 }
                 
                 try {
-                    // 构建请求体
                     const requestBody = {
                         phone: phone || null,
                         email: email || null
                     };
-                    
-                    // 调用Salesforce REST API
+
                     const response = await fetch(SALESFORCE_API_ENDPOINT, {
                         method: 'POST',
                         headers: {
@@ -803,12 +785,11 @@
                     
                     if (result.success === false) {
                         throw new Error(result.message || 'Salesforce返回未知错误');
-                    }
-                    
+                    }     
                     duplicateRecords = result.duplicates || [];
                     
                     if (duplicateRecords.length > 0) {
-                        // 更新状态
+
                         if(phone) {
                             updateStatus('phone', 'duplicate', '电话已存在系统中');
                             phoneDuplicateHint.style.display = 'flex';
@@ -826,7 +807,6 @@
                         
                         return true;
                     } else {
-                        // 更新状态
                         if(phone) {
                             updateStatus('phone', 'available', '电话可用');
                             phoneDuplicateHint.style.display = 'none';
@@ -838,7 +818,6 @@
                         }
                         
                         if(source === 'submit') {
-                            // 如果没有重复，继续提交
                             submitForm();
                         }
                         
@@ -846,8 +825,6 @@
                     }
                 } catch (error) {
                     console.error('检查重复记录时出错:', error);
-                    
-                    // 更新连接状态
                     connectionStatus.innerHTML = `
                         <div class="status-dot disconnected"></div>
                         <span>Salesforce连接失败: ${error.message}</span>
@@ -872,28 +849,19 @@
                     return false;
                 }
             }
-            
-            // 提交表单
+
             function submitForm() {
-                // 显示提交状态
+
                 submitText.textContent = '提交中...';
                 submitLoader.style.display = 'inline-block';
                 formStatus.textContent = '正在提交数据到Salesforce...';
                 formStatus.className = 'status-message status-info';
                 formStatus.style.display = 'block';
-                
-                // 隐藏重复警告（如果有）
                 hideDuplicateWarning();
-                
-                // 直接提交表单（这将导致页面重定向）
                 form.submit();
             }
-            
-            // 显示重复警告
             function showDuplicateWarning() {
                 duplicateWarning.style.display = 'block';
-                
-                // 生成重复记录列表
                 if(duplicateRecords.length > 0) {
                     duplicateList.innerHTML = '';
                     duplicateRecords.forEach(record => {
@@ -916,25 +884,24 @@
                     duplicateList.innerHTML = '<div class="duplicate-item">未找到具体记录</div>';
                 }
                 
-                // 滚动到警告位置
+
                 duplicateWarning.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
             
-            // 隐藏重复警告
+
             function hideDuplicateWarning() {
                 duplicateWarning.style.display = 'none';
             }
             
-            // 隐藏重复提示
+
             function hideDuplicateHints() {
                 phoneDuplicateHint.style.display = 'none';
                 emailDuplicateHint.style.display = 'none';
             }
             
-            // 初始检查Salesforce连接状态
+
             checkConnectionStatus();
-            
-            // 检查Salesforce连接状态
+
             async function checkConnectionStatus() {
                 try {
                     const response = await fetch(SALESFORCE_API_ENDPOINT, {
@@ -956,47 +923,13 @@
                     `;
                 }
             }
-            
-            // 模拟重复记录检查（用于演示）
-            function simulateDuplicateCheck() {
-                setTimeout(() => {
-                    duplicateRecords = [
-                        {
-                            Id: '003000000000001',
-                            Name: '张先生',
-                            Phone: '13800138000',
-                            Email: 'zhang@example.com',
-                            Status: '已联系'
-                        },
-                        {
-                            Id: '003000000000002',
-                            Name: '李女士',
-                            Phone: '13900139000',
-                            Email: 'li@example.com',
-                            Status: '待跟进'
-                        }
-                    ];
-                    
-                    // 更新状态
-                    updateStatus('phone', 'duplicate', '电话已存在系统中');
-                    phoneDuplicateHint.style.display = 'flex';
-                    
-                    updateStatus('email', 'duplicate', '邮箱已存在系统中');
-                    emailDuplicateHint.style.display = 'flex';
-                    
-                    // 显示重复警告
-                    showDuplicateWarning();
-                }, 2000);
-            }
-            
-            // 初始化演示数据
+
             setTimeout(() => {
                 document.getElementById('last_name').value = '王先生';
                 document.getElementById('phone').value = '13800138000';
                 document.getElementById('email').value = 'zhang@example.com';
                 document.getElementById('00NIU00000LPpgc2AD').value = '产品A';
-                
-                // 模拟重复记录检查
+
                 simulateDuplicateCheck();
             }, 1000);
         });
