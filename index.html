@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>产品咨询表单 - 问题修复版</title>
+    <title>销售线索表单 - 重复记录检测</title>
     <style>
         * {
             box-sizing: border-box;
@@ -167,6 +167,7 @@
         
         .form-group {
             margin-bottom: 25px;
+            position: relative;
         }
         
         label {
@@ -269,103 +270,224 @@
             }
         }
         
-        /* 调试面板样式 */
-        .debug-panel {
-            background-color: #f8f9fa;
-            border: 1px solid #e9ecef;
+        /* 错误消息样式 */
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none;
+            padding: 5px 10px;
+            background-color: #fff6f6;
+            border-radius: 4px;
+            border-left: 3px solid #e74c3c;
+        }
+        
+        .duplicate-warning {
+            background-color: #fff8e6;
+            border: 1px solid #ffd966;
             border-radius: 8px;
-            padding: 20px;
-            margin-top: 30px;
-            font-family: monospace;
-            max-height: 300px;
+            padding: 15px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .duplicate-warning h4 {
+            color: #e67e22;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .duplicate-warning h4:before {
+            content: "⚠️";
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .status-message {
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+        
+        .status-success {
+            background-color: #e8f5e9;
+            color: #4CAF50;
+            border: 1px solid #c8e6c9;
+        }
+        
+        .status-error {
+            background-color: #ffebee;
+            color: #f44336;
+            border: 1px solid #ffcdd2;
+        }
+        
+        .status-info {
+            background-color: #e3f2fd;
+            color: #2196F3;
+            border: 1px solid #bbdefb;
+        }
+        
+        /* 加载动画 */
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 重复记录状态指示器 */
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-available {
+            background-color: #4CAF50;
+        }
+        
+        .status-duplicate {
+            background-color: #f44336;
+        }
+        
+        .status-checking {
+            background-color: #FFC107;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+        
+        .status-text {
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        /* 重复记录列表 */
+        .duplicate-list {
+            margin-top: 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 10px;
+            background: #fff;
+            max-height: 200px;
             overflow-y: auto;
         }
         
-        .debug-header {
+        .duplicate-item {
+            padding: 8px;
+            border-bottom: 1px solid #f5f5f5;
+            display: flex;
+            align-items: center;
+        }
+        
+        .duplicate-item:last-child {
+            border-bottom: none;
+        }
+        
+        .duplicate-icon {
+            margin-right: 10px;
+            color: #f44336;
+        }
+        
+        .duplicate-details {
+            flex: 1;
+        }
+        
+        .duplicate-name {
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+        
+        .duplicate-info {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        /* 检测结果面板 */
+        .detection-results {
+            margin-top: 20px;
+            border-radius: 8px;
+            padding: 15px;
+            background: #f8fafc;
+            border: 1px solid #eaeef5;
+        }
+        
+        .detection-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
             padding-bottom: 10px;
-            border-bottom: 1px solid #dee2e6;
+            border-bottom: 1px solid #eaeef5;
         }
         
-        .debug-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #dc3545;
+        .detection-title {
+            font-weight: 600;
+            color: #0176d3;
+            font-size: 1.1rem;
         }
         
-        .debug-toggle {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        
-        .debug-content {
-            line-height: 1.6;
-        }
-        
-        .debug-item {
-            margin-bottom: 8px;
-        }
-        
-        .debug-label {
-            font-weight: bold;
-            color: #495057;
-            display: inline-block;
-            width: 160px;
-        }
-        
-        .debug-value {
-            color: #0d6efd;
-        }
-        
-        .debug-error {
-            color: #dc3545;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-        
-        .debug-success {
-            color: #198754;
-            font-weight: bold;
+        .detection-status {
+            font-size: 0.9rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            background: #e6f2ff;
+            color: #0176d3;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>产品咨询表单 - 已修复</h1>
+            <h1>销售线索表单</h1>
             <p>请填写以下信息，我们的销售顾问将在24小时内联系您</p>
         </div>
         
         <div class="content-wrapper">
             <div class="form-section">
-                <!-- 修复1：添加了 enctype 属性 -->
-                <form id="leadForm" action="https://webto.salesforce.com/servlet/servlet.WebToLead" method="POST" enctype="application/x-www-form-urlencoded">
-                    <!-- 修复2：确保所有隐藏字段正确 -->
+                <form id="leadForm" action="https://webto.salesforce.com/servlet/servlet.WebToLead" method="POST">
                     <input type="hidden" name="oid" value="00DIU000002NTsf">
                     <input type="hidden" name="retURL" value="https://davidcapcap.github.io/thank-you.html">
                     <input type="hidden" name="encoding" value="UTF-8">
-                    <input type="hidden" name="company" value="网站客户"> <!-- 必填字段默认值 -->
+                    <input type="hidden" name="company" value="网站客户">
                     
                     <div class="form-group">
                         <label for="last_name" class="required">客户姓名</label>
                         <input id="last_name" name="last_name" type="text" required placeholder="请输入您的姓名">
+                        <div class="error-message" id="nameError"></div>
                     </div>
                     
                     <div class="form-group">
                         <label for="phone" class="required">联系电话</label>
                         <input id="phone" name="phone" type="tel" required placeholder="请输入您的手机号码">
+                        <div class="error-message" id="phoneError"></div>
+                        <div class="status-text" id="phoneStatus"></div>
                     </div>
                     
                     <div class="form-group">
                         <label for="email">联系邮箱</label>
                         <input id="email" name="email" type="email" placeholder="请输入您的电子邮箱">
+                        <div class="error-message" id="emailError"></div>
+                        <div class="status-text" id="emailStatus"></div>
                     </div>
                     
                     <div class="form-group">
@@ -379,41 +501,39 @@
                         </select>
                     </div>
                     
-                    <button type="submit">提交咨询</button>
+                    <!-- 重复记录警告 -->
+                    <div class="duplicate-warning" id="duplicateWarning">
+                        <h4>重复记录警告</h4>
+                        <p id="duplicateMessage">电话或邮箱已经注册，请换一个新的号码或邮箱注册</p>
+                        <div class="duplicate-list" id="duplicateList"></div>
+                    </div>
+                    
+                    <!-- 检测结果面板 -->
+                    <div class="detection-results">
+                        <div class="detection-header">
+                            <div class="detection-title">重复记录检测结果</div>
+                            <div class="detection-status" id="overallStatus">未检测</div>
+                        </div>
+                        <div class="highlight">
+                            <div class="highlight-icon">🔍</div>
+                            <div class="highlight-text">我们检测到系统中存在匹配的联系方式</div>
+                        </div>
+                        <div class="highlight">
+                            <div class="highlight-icon">🔄</div>
+                            <div class="highlight-text">请修改电话或邮箱以避免创建重复记录</div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" id="submitBtn">
+                        <span id="submitText">提交咨询</span>
+                        <span id="submitLoader" class="loader" style="display:none;"></span>
+                    </button>
                     
                     <p class="form-note">我们承诺保护您的隐私，不会将您的信息分享给第三方</p>
+                    
+                    <!-- 提交状态消息 -->
+                    <div id="formStatus" class="status-message"></div>
                 </form>
-                
-                <!-- 调试面板 -->
-                <div class="debug-panel">
-                    <div class="debug-header">
-                        <div class="debug-title">表单调试信息</div>
-                        <button class="debug-toggle" id="toggleDebug">显示详情</button>
-                    </div>
-                    <div class="debug-content" id="debugContent">
-                        <div class="debug-item">
-                            <span class="debug-label">表单状态：</span>
-                            <span class="debug-value" id="formStatus">等待提交</span>
-                        </div>
-                        <div class="debug-item">
-                            <span class="debug-label">组织ID验证：</span>
-                            <span class="debug-value" id="oidStatus">未验证</span>
-                        </div>
-                        <div class="debug-item">
-                            <span class="debug-label">自定义字段验证：</span>
-                            <span class="debug-value" id="customFieldStatus">未验证</span>
-                        </div>
-                        <div class="debug-item">
-                            <span class="debug-label">公司字段：</span>
-                            <span class="debug-value" id="companyStatus">已包含 (网站客户)</span>
-                        </div>
-                        <div class="debug-item">
-                            <span class="debug-label">提交URL：</span>
-                            <span class="debug-value">https://webto.salesforce.com/servlet/servlet.WebToLead</span>
-                        </div>
-                        <div id="errorMessages"></div>
-                    </div>
-                </div>
             </div>
             
             <div class="image-section">
@@ -426,22 +546,26 @@
                 </div>
                 
                 <div class="product-highlights">
-                    <h3>常见问题解决方案</h3>
+                    <h3>表单验证功能</h3>
                     <div class="highlight">
                         <div class="highlight-icon">✓</div>
-                        <div class="highlight-text">确保Salesforce组织ID正确</div>
+                        <div class="highlight-text">实时检查重复联系方式</div>
                     </div>
                     <div class="highlight">
                         <div class="highlight-icon">✓</div>
-                        <div class="highlight-text">验证自定义字段ID正确</div>
+                        <div class="highlight-text">友好的错误提示</div>
                     </div>
                     <div class="highlight">
                         <div class="highlight-icon">✓</div>
-                        <div class="highlight-text">包含公司字段（必填）</div>
+                        <div class="highlight-text">安全的表单提交</div>
                     </div>
                     <div class="highlight">
                         <div class="highlight-icon">✓</div>
-                        <div class="highlight-text">检查Web-to-Lead是否激活</div>
+                        <div class="highlight-text">防止重复记录创建</div>
+                    </div>
+                    <div class="highlight">
+                        <div class="highlight-icon">✓</div>
+                        <div class="highlight-text">显示匹配的现有记录</div>
                     </div>
                 </div>
             </div>
@@ -453,120 +577,359 @@
     </div>
 
     <script>
-        // 表单调试与验证工具
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('leadForm');
-            const debugContent = document.getElementById('debugContent');
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = document.getElementById('submitText');
+            const submitLoader = document.getElementById('submitLoader');
             const formStatus = document.getElementById('formStatus');
-            const oidStatus = document.getElementById('oidStatus');
-            const customFieldStatus = document.getElementById('customFieldStatus');
-            const errorMessages = document.getElementById('errorMessages');
-            const toggleButton = document.getElementById('toggleDebug');
+            const duplicateWarning = document.getElementById('duplicateWarning');
+            const duplicateMessage = document.getElementById('duplicateMessage');
+            const duplicateList = document.getElementById('duplicateList');
+            const overallStatus = document.getElementById('overallStatus');
+            const phoneStatus = document.getElementById('phoneStatus');
+            const emailStatus = document.getElementById('emailStatus');
             
-            let isDebugExpanded = false;
+            const phoneInput = document.getElementById('phone');
+            const emailInput = document.getElementById('email');
+            const phoneError = document.getElementById('phoneError');
+            const emailError = document.getElementById('emailError');
             
-            // 调试面板切换
-            toggleButton.addEventListener('click', function() {
-                isDebugExpanded = !isDebugExpanded;
-                debugContent.style.display = isDebugExpanded ? 'block' : 'none';
-                toggleButton.textContent = isDebugExpanded ? '隐藏详情' : '显示详情';
+            // 检查重复记录的计时器
+            let checkTimer;
+            // 重复记录数据
+            let duplicateRecords = [];
+            // 检测状态
+            let detectionStatus = 'idle';
+            
+            // 电话号码输入事件
+            phoneInput.addEventListener('input', function() {
+                clearTimeout(checkTimer);
+                if(phoneInput.value.length > 5) {
+                    updateStatus('phone', 'checking', '检查中...');
+                    checkTimer = setTimeout(() => checkForDuplicates('phone'), 800);
+                } else {
+                    updateStatus('phone', 'idle', '');
+                }
+                hideDuplicateWarning();
             });
             
-            // 初始隐藏调试详情
-            debugContent.style.display = 'none';
+            // 邮箱输入事件
+            emailInput.addEventListener('input', function() {
+                clearTimeout(checkTimer);
+                if(emailInput.value.length > 5) {
+                    updateStatus('email', 'checking', '检查中...');
+                    checkTimer = setTimeout(() => checkForDuplicates('email'), 800);
+                } else {
+                    updateStatus('email', 'idle', '');
+                }
+                hideDuplicateWarning();
+            });
             
             // 表单提交处理
-            form.addEventListener('submit', function(event) {
-                // 阻止默认提交以便调试
+            form.addEventListener('submit', async function(event) {
                 event.preventDefault();
                 
-                // 验证表单字段
-                const errors = validateForm();
-                
-                if (errors.length > 0) {
-                    showErrors(errors);
-                    formStatus.textContent = '验证失败';
-                    formStatus.style.color = '#dc3545';
-                } else {
-                    formStatus.textContent = '正在提交...';
-                    formStatus.style.color = '#0d6efd';
-                    
-                    // 显示提交数据
-                    const formData = new FormData(form);
-                    console.log('提交数据:', Object.fromEntries(formData));
-                    
-                    // 实际提交表单（使用setTimeout模拟网络延迟）
-                    setTimeout(function() {
-                        // 模拟提交成功
-                        formStatus.textContent = '提交成功!';
-                        formStatus.style.color = '#198754';
-                        
-                        // 显示成功消息
-                        showSuccess();
-                        
-                        // 实际提交（取消注释以下行）
-                       form.submit();
-                    }, 1500);
+                // 验证必填字段
+                if(!validateRequiredFields()) {
+                    return;
                 }
+                
+                // 检查重复记录
+                const hasDuplicates = await checkForDuplicates('submit');
+                
+                if(hasDuplicates) {
+                    // 显示重复警告
+                    showDuplicateWarning();
+                    return;
+                }
+                
+                // 提交表单
+                submitForm();
             });
             
-            // 表单验证
-            function validateForm() {
-                const errors = [];
-                errorMessages.innerHTML = '';
+            // 验证必填字段
+            function validateRequiredFields() {
+                let isValid = true;
                 
-                // 验证组织ID
-                const oid = document.querySelector('input[name="oid"]').value;
-                if (!oid || oid === 'YOUR_ORG_ID') {
-                    errors.push('组织ID未设置或无效');
-                    oidStatus.innerHTML = '<span style="color:#dc3545">未设置或无效</span>';
-                } else {
-                    oidStatus.innerHTML = '<span style="color:#198754">已设置</span>';
+                // 重置错误信息
+                document.querySelectorAll('.error-message').forEach(el => {
+                    el.style.display = 'none';
+                });
+                
+                // 验证姓名
+                const nameInput = document.getElementById('last_name');
+                if(!nameInput.value.trim()) {
+                    document.getElementById('nameError').textContent = '客户姓名为必填字段';
+                    document.getElementById('nameError').style.display = 'block';
+                    isValid = false;
                 }
                 
-                // 验证自定义字段
-                const customField = document.querySelector('select[name="00NXXXXXXXXXXX"]');
-                if (customField && customField.name.includes('XXXXXXXXXXX')) {
-                    errors.push('自定义字段ID未正确设置');
-                    customFieldStatus.innerHTML = '<span style="color:#dc3545">未正确设置</span>';
-                } else {
-                    customFieldStatus.innerHTML = '<span style="color:#198754">已设置</span>';
+                // 验证电话
+                if(!phoneInput.value.trim()) {
+                    phoneError.textContent = '联系电话为必填字段';
+                    phoneError.style.display = 'block';
+                    isValid = false;
+                } else if(!/^1[3-9]\d{9}$/.test(phoneInput.value)) {
+                    phoneError.textContent = '请输入有效的手机号码';
+                    phoneError.style.display = 'block';
+                    isValid = false;
                 }
                 
-                // 验证公司字段
-                const companyField = document.querySelector('input[name="company"]');
-                if (!companyField || !companyField.value) {
-                    errors.push('公司字段未设置');
+                // 验证邮箱格式
+                if(emailInput.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value)) {
+                    emailError.textContent = '请输入有效的电子邮箱';
+                    emailError.style.display = 'block';
+                    isValid = false;
                 }
                 
-                // 验证必填字段
-                const lastName = document.getElementById('last_name').value;
-                if (!lastName) {
-                    errors.push('客户姓名为必填字段');
-                }
-                
-                const phone = document.getElementById('phone').value;
-                if (!phone) {
-                    errors.push('联系电话为必填字段');
-                }
-                
-                return errors;
+                return isValid;
             }
             
-            // 显示错误信息
-            function showErrors(errors) {
-                errorMessages.innerHTML = '<div class="debug-error">发现以下问题：</div>';
-                errors.forEach(error => {
-                    const errorEl = document.createElement('div');
-                    errorEl.className = 'debug-item';
-                    errorEl.innerHTML = `<span class="debug-label">问题：</span><span>${error}</span>`;
-                    errorMessages.appendChild(errorEl);
+            // 更新状态指示器
+            function updateStatus(field, status, message) {
+                const statusElement = field === 'phone' ? phoneStatus : emailStatus;
+                const indicatorClass = {
+                    'idle': '',
+                    'checking': 'status-checking',
+                    'duplicate': 'status-duplicate',
+                    'available': 'status-available'
+                }[status];
+                
+                if (status === 'idle') {
+                    statusElement.innerHTML = '';
+                    return;
+                }
+                
+                statusElement.innerHTML = `
+                    <span class="status-indicator ${indicatorClass}"></span>
+                    ${message}
+                `;
+            }
+            
+            // 更新整体检测状态
+            function updateOverallStatus() {
+                const hasDuplicates = duplicateRecords.length > 0;
+                overallStatus.textContent = hasDuplicates ? '发现重复记录' : '无重复记录';
+                overallStatus.style.backgroundColor = hasDuplicates ? '#ffebee' : '#e8f5e9';
+                overallStatus.style.color = hasDuplicates ? '#f44336' : '#4CAF50';
+            }
+            
+            // 检查重复记录
+            async function checkForDuplicates(source) {
+                const phone = phoneInput.value.trim();
+                const email = emailInput.value.trim();
+                
+                // 如果电话和邮箱都为空，则不检查
+                if((!phone || phone.length < 5) && (!email || email.length < 5)) {
+                    duplicateRecords = [];
+                    updateOverallStatus();
+                    return false;
+                }
+                
+                // 显示加载状态
+                if(source === 'submit') {
+                    submitText.textContent = '检查重复记录...';
+                    submitLoader.style.display = 'inline-block';
+                    formStatus.textContent = '正在检查重复记录...';
+                    formStatus.className = 'status-message status-info';
+                    formStatus.style.display = 'block';
+                }
+                
+                try {
+                    // 在实际应用中，这里应该调用您的服务器端点
+                    // 该端点会查询Salesforce检查重复记录
+                    // 以下是模拟实现
+                    
+                    // 模拟API调用延迟
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                    
+                    // 模拟重复记录检查结果
+                    // 在实际应用中，这应该是一个真实的API调用
+                    const isDuplicate = Math.random() > 0.5; // 50%的几率模拟重复
+                    
+                    if(isDuplicate) {
+                        // 生成模拟的重复记录
+                        duplicateRecords = generateMockDuplicates(phone, email);
+                        
+                        // 更新状态
+                        if(phone) {
+                            updateStatus('phone', 'duplicate', '电话已存在系统中');
+                        }
+                        
+                        if(email) {
+                            updateStatus('email', 'duplicate', '邮箱已存在系统中');
+                        }
+                        
+                        // 更新整体状态
+                        updateOverallStatus();
+                        
+                        if(source === 'submit') {
+                            submitText.textContent = '提交咨询';
+                            submitLoader.style.display = 'none';
+                        }
+                        
+                        return true;
+                    } else {
+                        // 没有重复记录
+                        duplicateRecords = [];
+                        
+                        // 更新状态
+                        if(phone) {
+                            updateStatus('phone', 'available', '电话可用');
+                        }
+                        
+                        if(email) {
+                            updateStatus('email', 'available', '邮箱可用');
+                        }
+                        
+                        // 更新整体状态
+                        updateOverallStatus();
+                        
+                        if(source === 'submit') {
+                            // 如果没有重复，继续提交
+                            submitForm();
+                        }
+                        
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('检查重复记录时出错:', error);
+                    duplicateRecords = [];
+                    updateOverallStatus();
+                    
+                    if(source === 'submit') {
+                        formStatus.textContent = '检查重复记录时出错，请稍后再试';
+                        formStatus.className = 'status-message status-error';
+                        formStatus.style.display = 'block';
+                        submitText.textContent = '提交咨询';
+                        submitLoader.style.display = 'none';
+                    }
+                    
+                    return false;
+                }
+            }
+            
+            // 生成模拟的重复记录
+            function generateMockDuplicates(phone, email) {
+                const records = [];
+                const names = ['张伟', '王芳', '李明', '刘洋', '陈晓'];
+                const statuses = ['新线索', '已联系', '已转化', '已关闭'];
+                const sources = ['网站表单', '展会展台', '电话营销', '客户推荐'];
+                
+                // 生成1-3条重复记录
+                const count = Math.floor(Math.random() * 3) + 1;
+                
+                for(let i = 0; i < count; i++) {
+                    const name = names[Math.floor(Math.random() * names.length)];
+                    const status = statuses[Math.floor(Math.random() * statuses.length)];
+                    const source = sources[Math.floor(Math.random() * sources.length)];
+                    const createdDate = new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000);
+                    
+                    records.push({
+                        id: '00Q' + Math.random().toString(36).substr(2, 15).toUpperCase(),
+                        name: name,
+                        phone: phone,
+                        email: email,
+                        status: status,
+                        source: source,
+                        createdDate: createdDate.toLocaleDateString('zh-CN'),
+                        owner: '销售团队'
+                    });
+                }
+                
+                return records;
+            }
+            
+            // 提交表单
+            function submitForm() {
+                submitText.textContent = '提交中...';
+                submitLoader.style.display = 'inline-block';
+                formStatus.textContent = '正在提交数据到Salesforce...';
+                formStatus.className = 'status-message status-info';
+                formStatus.style.display = 'block';
+                
+                // 创建表单数据副本用于提交
+                const formData = new FormData(form);
+                
+                // 使用AJAX提交表单以获取更多反馈
+                fetch(form.action, {
+                    method: 'POST',
+                    body: new URLSearchParams(formData),
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // 显示成功消息
+                        formStatus.textContent = '提交成功! 正在跳转到感谢页面...';
+                        formStatus.className = 'status-message status-success';
+                        
+                        // 重定向到感谢页面
+                        setTimeout(() => {
+                            window.location.href = form.querySelector('[name="retURL"]').value;
+                        }, 2000);
+                    } else {
+                        // 显示错误消息
+                        formStatus.textContent = `提交失败: 服务器返回状态 ${response.status}`;
+                        formStatus.className = 'status-message status-error';
+                        submitText.textContent = '提交咨询';
+                        submitLoader.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    // 显示错误消息
+                    formStatus.textContent = '提交失败: ' + error.message;
+                    formStatus.className = 'status-message status-error';
+                    submitText.textContent = '提交咨询';
+                    submitLoader.style.display = 'none';
                 });
             }
             
-            // 显示成功消息
-            function showSuccess() {
-                errorMessages.innerHTML = '<div class="debug-success">表单验证通过，数据已提交到Salesforce!</div>';
+            // 显示重复警告
+            function showDuplicateWarning() {
+                duplicateWarning.style.display = 'block';
+                
+                // 生成重复记录列表
+                if(duplicateRecords.length > 0) {
+                    duplicateList.innerHTML = '';
+                    duplicateRecords.forEach(record => {
+                        const item = document.createElement('div');
+                        item.className = 'duplicate-item';
+                        item.innerHTML = `
+                            <div class="duplicate-icon">⚠️</div>
+                            <div class="duplicate-details">
+                                <div class="duplicate-name">${record.name}</div>
+                                <div class="duplicate-info">
+                                    <span>电话: ${record.phone}</span> | 
+                                    <span>状态: ${record.status}</span> | 
+                                    <span>创建: ${record.createdDate}</span>
+                                </div>
+                            </div>
+                        `;
+                        duplicateList.appendChild(item);
+                    });
+                } else {
+                    duplicateList.innerHTML = '<div class="duplicate-item">未找到具体记录</div>';
+                }
+                
+                // 根据输入决定显示哪条消息
+                if(phoneInput.value && emailInput.value) {
+                    duplicateMessage.textContent = '电话或邮箱已经注册，请换一个新的号码或邮箱';
+                } else if(phoneInput.value) {
+                    duplicateMessage.textContent = '该电话号码已注册，请使用其他号码';
+                } else {
+                    duplicateMessage.textContent = '该电子邮箱已注册，请使用其他邮箱';
+                }
+                
+                // 滚动到警告位置
+                duplicateWarning.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            
+            // 隐藏重复警告
+            function hideDuplicateWarning() {
+                duplicateWarning.style.display = 'none';
             }
         });
     </script>
