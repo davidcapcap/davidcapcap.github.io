@@ -349,53 +349,6 @@
         .disconnected {
             background-color: #f44336;
         }
-        
-        /* 重复错误样式 */
-        .duplicate-error {
-            border-color: #e74c3c !important;
-            background-color: #fffafa !important;
-        }
-        
-        .duplicate-error:focus {
-            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2) !important;
-        }
-        
-        .duplicate-error-message {
-            display: block !important;
-            background-color: #fff6f6;
-            border-left: 3px solid #e74c3c;
-            padding: 8px 12px;
-            border-radius: 4px;
-            margin-top: 8px;
-            animation: fadeIn 0.3s ease;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .duplicate-summary {
-            background-color: #fff8e6;
-            border: 1px solid #ffd966;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        
-        .duplicate-summary h4 {
-            color: #e67e22;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .duplicate-summary h4:before {
-            content: "⚠️";
-            margin-right: 10px;
-            font-size: 1.2rem;
-        }
     </style>
 </head>
 <body>
@@ -411,12 +364,6 @@
         
         <div class="content-wrapper">
             <div class="form-section">
-                <!-- 重复记录摘要 -->
-                <div class="duplicate-summary" id="duplicateSummary">
-                    <h4>系统检测到重复记录</h4>
-                    <p>您提供的联系方式在系统中已存在，请使用新的电话或邮箱</p>
-                </div>
-                
                 <form id="leadForm" action="https://webto.salesforce.com/servlet/servlet.WebToLead" method="POST">
                     <input type="hidden" name="oid" value="00DIU000002NTsf">
                     <input type="hidden" name="retURL" value="https://davidcapcap.github.io/thank-you.html">
@@ -432,14 +379,12 @@
                     <div class="form-group">
                         <label for="phone" class="required">联系电话</label>
                         <input id="phone" name="phone" type="tel" required placeholder="请输入您的手机号码">
-                        <div class="error-message duplicate-error-message" id="phoneDuplicateError" style="display: none;">该电话已存在系统中，请使用新的电话号码</div>
                         <div class="error-message" id="phoneError"></div>
                     </div>
                     
                     <div class="form-group">
                         <label for="email">联系邮箱</label>
                         <input id="email" name="email" type="email" placeholder="请输入您的电子邮箱">
-                        <div class="error-message duplicate-error-message" id="emailDuplicateError" style="display: none;">该邮箱已存在系统中，请使用新的电子邮箱</div>
                         <div class="error-message" id="emailError"></div>
                     </div>
                     
@@ -514,51 +459,24 @@
             const submitLoader = document.getElementById('submitLoader');
             const formStatus = document.getElementById('formStatus');
             const connectionStatus = document.getElementById('connectionStatus');
-            const duplicateSummary = document.getElementById('duplicateSummary');
             
             const phoneInput = document.getElementById('phone');
             const emailInput = document.getElementById('email');
             const phoneError = document.getElementById('phoneError');
             const emailError = document.getElementById('emailError');
-            const phoneDuplicateError = document.getElementById('phoneDuplicateError');
-            const emailDuplicateError = document.getElementById('emailDuplicateError');
             
-            // 解析URL参数以检查是否有重复错误
-            const urlParams = new URLSearchParams(window.location.search);
-            const duplicateType = urlParams.get('duplicate');
-            
-            // 如果有重复错误参数，显示错误信息
-            if (duplicateType) {
-                duplicateSummary.style.display = 'block';
-                
-                if (duplicateType.includes('phone')) {
-                    phoneInput.classList.add('duplicate-error');
-                    phoneDuplicateError.style.display = 'block';
-                }
-                
-                if (duplicateType.includes('email')) {
-                    emailInput.classList.add('duplicate-error');
-                    emailDuplicateError.style.display = 'block';
-                }
-                
-                // 滚动到错误位置
-                setTimeout(() => {
-                    if (duplicateType.includes('phone')) {
-                        phoneInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    } else if (duplicateType.includes('email')) {
-                        emailInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                }, 300);
-            }
+            // Salesforce REST API端点配置
+            const SALESFORCE_API_ENDPOINT = '/services/apexrest/CheckDuplicateLeads';
             
             // 表单提交处理
-            form.addEventListener('submit', function(event) {
+            form.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                
                 // 重置错误状态
                 resetErrors();
                 
                 // 验证必填字段
-                if (!validateRequiredFields()) {
-                    event.preventDefault();
+                if(!validateRequiredFields()) {
                     return;
                 }
                 
@@ -568,20 +486,51 @@
                 formStatus.textContent = '正在提交数据到Salesforce...';
                 formStatus.className = 'status-message status-info';
                 formStatus.style.display = 'block';
+                
+                // 创建表单数据副本用于提交
+                const formData = new FormData(form);
+                
+                try {
+                    // 使用AJAX提交表单
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: new URLSearchParams(formData),
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        // 提交成功，重定向到感谢页面
+                        window.location.href = form.querySelector('[name="retURL"]').value;
+                    } else {
+                        // 处理Salesforce返回的错误
+                        const errorData = await response.text();
+                        console.error('Salesforce返回错误:', errorData);
+                        
+                        // 检查是否是重复记录错误
+                        if (errorData.includes('DUPLICATE_RECORD')) {
+                            // 重定向到重复记录错误页面
+                            window.location.href = 'duplicate-error.html';
+                        } else {
+                            // 显示其他错误消息
+                            formStatus.textContent = `提交失败: 服务器返回状态 ${response.status}`;
+                            formStatus.className = 'status-message status-error';
+                            submitText.textContent = '提交咨询';
+                            submitLoader.style.display = 'none';
+                        }
+                    }
+                } catch (error) {
+                    // 显示错误消息
+                    formStatus.textContent = '提交失败: ' + error.message;
+                    formStatus.className = 'status-message status-error';
+                    submitText.textContent = '提交咨询';
+                    submitLoader.style.display = 'none';
+                }
             });
             
             // 重置错误状态
             function resetErrors() {
-                // 移除错误样式
-                phoneInput.classList.remove('duplicate-error');
-                emailInput.classList.remove('duplicate-error');
-                
-                // 隐藏错误消息
-                phoneDuplicateError.style.display = 'none';
-                emailDuplicateError.style.display = 'none';
-                duplicateSummary.style.display = 'none';
-                
-                // 重置其他错误消息
                 document.querySelectorAll('.error-message').forEach(el => {
                     el.style.display = 'none';
                 });
@@ -592,9 +541,9 @@
                 const phone = phoneInput.value.trim();
                 phoneError.style.display = 'none';
                 
-                if (!phone) return true;
+                if(!phone) return true;
                 
-                if (!/^1[3-9]\d{9}$/.test(phone)) {
+                if(!/^1[3-9]\d{9}$/.test(phone)) {
                     phoneError.textContent = '请输入有效的手机号码（11位，以1开头，第二位为3-9）';
                     phoneError.style.display = 'block';
                     return false;
@@ -608,9 +557,9 @@
                 const email = emailInput.value.trim();
                 emailError.style.display = 'none';
                 
-                if (!email) return true;
+                if(!email) return true;
                 
-                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
                     emailError.textContent = '请输入有效的电子邮箱';
                     emailError.style.display = 'block';
                     return false;
@@ -625,28 +574,24 @@
                 
                 // 验证姓名
                 const nameInput = document.getElementById('last_name');
-                if (!nameInput.value.trim()) {
+                if(!nameInput.value.trim()) {
                     document.getElementById('nameError').textContent = '客户姓名为必填字段';
                     document.getElementById('nameError').style.display = 'block';
                     isValid = false;
                 }
                 
                 // 验证电话格式
-                if (!validatePhoneFormat()) {
-                    isValid = false;
-                }
+                isValid = validatePhoneFormat() && isValid;
                 
                 // 验证电话必填
-                if (!phoneInput.value.trim()) {
+                if(!phoneInput.value.trim()) {
                     phoneError.textContent = '联系电话为必填字段';
                     phoneError.style.display = 'block';
                     isValid = false;
                 }
                 
                 // 验证邮箱格式
-                if (!validateEmailFormat()) {
-                    isValid = false;
-                }
+                isValid = validateEmailFormat() && isValid;
                 
                 return isValid;
             }
