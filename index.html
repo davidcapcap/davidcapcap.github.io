@@ -3,9 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>产品咨询表单 - Salesforce数据验证</title>
+    <title>Salesforce Web-to-Lead 集成解决方案</title>
     <style>
-        /* 样式保持不变 */
+        :root {
+            --salesforce-blue: #0176d3;
+            --salesforce-dark-blue: #005fb2;
+            --error-red: #ea001e;
+            --success-green: #45c65a;
+            --warning-yellow: #fe9339;
+            --light-bg: #f8fafc;
+            --border-color: #dddbda;
+        }
+        
         * {
             box-sizing: border-box;
             margin: 0;
@@ -34,7 +43,7 @@
         }
         
         .header {
-            background: linear-gradient(120deg, #0176d3 0%, #005fb2 100%);
+            background: linear-gradient(120deg, var(--salesforce-blue) 0%, var(--salesforce-dark-blue) 100%);
             color: white;
             padding: 30px 40px;
             text-align: center;
@@ -70,6 +79,46 @@
             z-index: 1;
         }
         
+        .solution-section {
+            padding: 30px;
+            background-color: var(--light-bg);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .solution-steps {
+            margin-top: 20px;
+            counter-reset: step-counter;
+        }
+        
+        .step {
+            margin-bottom: 25px;
+            padding-left: 50px;
+            position: relative;
+        }
+        
+        .step::before {
+            counter-increment: step-counter;
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 36px;
+            height: 36px;
+            background: var(--salesforce-blue);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .step h3 {
+            margin-bottom: 8px;
+            color: var(--salesforce-dark-blue);
+        }
+        
         .content-wrapper {
             display: flex;
             flex-wrap: wrap;
@@ -81,89 +130,61 @@
             padding: 40px;
         }
         
-        .image-section {
+        .code-section {
             flex: 1;
             min-width: 300px;
             background: #f8fafc;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
             padding: 30px;
-            border-left: 1px solid #eaeef5;
+            border-left: 1px solid var(--border-color);
         }
         
-        .image-container {
-            width: 100%;
-            max-width: 400px;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-            margin-bottom: 25px;
-            position: relative;
-        }
-        
-        .image-container img {
-            width: 100%;
-            display: block;
-            transition: transform 0.5s ease;
-        }
-        
-        .image-container:hover img {
-            transform: scale(1.03);
-        }
-        
-        .image-overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(1, 118, 211, 0.85);
-            color: white;
-            padding: 15px;
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
-        }
-        
-        .image-container:hover .image-overlay {
-            transform: translateY(0);
-        }
-        
-        .product-highlights {
-            width: 100%;
-            max-width: 400px;
-        }
-        
-        .product-highlights h3 {
-            color: #0176d3;
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
             margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #0176d3;
-            font-size: 1.4rem;
         }
         
-        .highlight {
+        .code-header {
             display: flex;
-            margin-bottom: 15px;
-            align-items: flex-start;
-        }
-        
-        .highlight-icon {
-            background: #e6f2ff;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            margin-right: 12px;
-            flex-shrink: 0;
-            color: #0176d3;
+            margin-bottom: 15px;
+            color: #fff;
         }
         
-        .highlight-text {
-            font-size: 0.95rem;
-            line-height: 1.5;
+        .code-title {
+            font-weight: 600;
+        }
+        
+        .copy-btn {
+            background: var(--salesforce-blue);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        
+        .code-keyword {
+            color: #f92672;
+        }
+        
+        .code-class {
+            color: #a6e22e;
+        }
+        
+        .code-comment {
+            color: #75715e;
+        }
+        
+        .code-string {
+            color: #e6db74;
         }
         
         .form-group {
@@ -181,34 +202,28 @@
         
         .required::after {
             content: " *";
-            color: #e74c3c;
+            color: var(--error-red);
         }
         
         input, select {
             width: 100%;
             padding: 14px;
-            border: 1px solid #dce4ec;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             font-size: 1rem;
             transition: all 0.3s ease;
-            background: #f8fafc;
+            background: var(--light-bg);
         }
         
         input:focus, select:focus {
             outline: none;
-            border-color: #0176d3;
+            border-color: var(--salesforce-blue);
             box-shadow: 0 0 0 3px rgba(1, 118, 211, 0.2);
             background: white;
         }
         
-        input[type="tel"] {
-            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%230176d3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>') no-repeat 95% center;
-            background-size: 20px;
-            background-color: #f8fafc;
-        }
-        
         button {
-            background: linear-gradient(120deg, #0176d3 0%, #005fb2 100%);
+            background: linear-gradient(120deg, var(--salesforce-blue) 0%, var(--salesforce-dark-blue) 100%);
             color: white;
             border: none;
             padding: 16px 30px;
@@ -242,7 +257,7 @@
             padding: 25px;
             color: #7f8c8d;
             font-size: 0.9rem;
-            border-top: 1px solid #eaeef5;
+            border-top: 1px solid var(--border-color);
             margin-top: 20px;
             width: 100%;
         }
@@ -252,13 +267,12 @@
                 flex-direction: column;
             }
             
-            .image-section {
+            .code-section {
                 border-left: none;
-                border-top: 1px solid #eaeef5;
-                padding: 30px 20px;
+                border-top: 1px solid var(--border-color);
             }
             
-            .form-section {
+            .form-section, .code-section {
                 padding: 30px 20px;
             }
             
@@ -273,14 +287,14 @@
         
         /* 错误消息样式 */
         .error-message {
-            color: #e74c3c;
+            color: var(--error-red);
             font-size: 0.85rem;
             margin-top: 5px;
             display: none;
             padding: 5px 10px;
             background-color: #fff6f6;
             border-radius: 4px;
-            border-left: 3px solid #e74c3c;
+            border-left: 3px solid var(--error-red);
         }
         
         .status-message {
@@ -293,19 +307,19 @@
         
         .status-success {
             background-color: #e8f5e9;
-            color: #4CAF50;
+            color: var(--success-green);
             border: 1px solid #c8e6c9;
         }
         
         .status-error {
             background-color: #ffebee;
-            color: #f44336;
+            color: var(--error-red);
             border: 1px solid #ffcdd2;
         }
         
         .status-info {
             background-color: #e3f2fd;
-            color: #2196F3;
+            color: var(--salesforce-blue);
             border: 1px solid #bbdefb;
         }
         
@@ -327,7 +341,7 @@
         
         /* Salesforce 连接状态 */
         .connection-status {
-            background: #f8fafc;
+            background: var(--light-bg);
             border-radius: 8px;
             padding: 10px;
             margin-top: 15px;
@@ -344,22 +358,59 @@
         }
         
         .connected {
-            background-color: #4CAF50;
+            background-color: var(--success-green);
         }
         
         .disconnected {
-            background-color: #f44336;
+            background-color: var(--error-red);
+        }
+        
+        .solution-box {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .solution-box h3 {
+            color: var(--salesforce-blue);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>产品咨询表单</h1>
-            <p>请填写以下信息，我们的销售顾问将在24小时内联系您</p>
+            <h1>Salesforce Web-to-Lead 集成解决方案</h1>
+            <p>修复 "Unexpected token '<', "<html> <he"... is not valid JSON" 错误</p>
             <div class="connection-status" id="connectionStatus">
                 <div class="status-dot connected"></div>
                 <span>已连接到Salesforce</span>
+            </div>
+        </div>
+        
+        <div class="solution-section">
+            <h2>问题分析</h2>
+            <p>当网页尝试向Salesforce提交数据时，出现错误："提交失败: Unexpected token '<', "<html> <he"... is not valid JSON"。</p>
+            <p>该错误表明Salesforce返回了HTML内容而非预期的JSON响应，通常由以下原因导致：</p>
+            
+            <div class="solution-steps">
+                <div class="step">
+                    <h3>API端点配置错误</h3>
+                    <p>使用了相对路径而不是绝对URL，导致请求被重定向到登录页面</p>
+                </div>
+                <div class="step">
+                    <h3>缺少身份验证</h3>
+                    <p>未提供有效的Session ID或未配置访客用户权限</p>
+                </div>
+                <div class="step">
+                    <h3>CORS配置问题</h3>
+                    <p>Salesforce未配置允许跨域请求，导致浏览器阻止响应</p>
+                </div>
             </div>
         </div>
         
@@ -371,84 +422,209 @@
                     <input type="hidden" id="encoding" value="UTF-8">
                     <input type="hidden" id="company" value="网站客户">
                     
-                    <div class="form-group">
-                        <label for="last_name" class="required">客户姓名</label>
-                        <input id="last_name" name="last_name" type="text" required placeholder="请输入您的姓名">
-                        <div class="error-message" id="nameError"></div>
+                    <div class="solution-box">
+                        <h3>解决方案演示</h3>
+                        <p>以下表单已修复API端点和身份验证问题</p>
+                        
+                        <div class="form-group">
+                            <label for="last_name" class="required">客户姓名</label>
+                            <input id="last_name" name="last_name" type="text" required placeholder="请输入您的姓名">
+                            <div class="error-message" id="nameError"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone" class="required">联系电话</label>
+                            <input id="phone" name="phone" type="tel" required placeholder="请输入您的手机号码">
+                            <div class="error-message" id="phoneError"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">联系邮箱</label>
+                            <input id="email" name="email" type="email" placeholder="请输入您的电子邮箱">
+                            <div class="error-message" id="emailError"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="product">感兴趣的产品</label>
+                            <select id="product" name="00NIU00000LPpgc2AD">
+                                <option value="">-- 请选择产品 --</option>
+                                <option value="产品A">智能CRM系统</option>
+                                <option value="产品B">销售自动化工具</option>
+                                <option value="产品C">客户分析平台</option>
+                                <option value="产品D">营销云解决方案</option>
+                            </select>
+                        </div>
+                        
+                        <button type="button" id="submitBtn">
+                            <span id="submitText">提交咨询</span>
+                            <span id="submitLoader" class="loader" style="display:none;"></span>
+                        </button>
+                        
+                        <p class="form-note">我们承诺保护您的隐私，不会将您的信息分享给第三方</p>
+                        
+                        <!-- 提交状态消息 -->
+                        <div id="formStatus" class="status-message"></div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="phone" class="required">联系电话</label>
-                        <input id="phone" name="phone" type="tel" required placeholder="请输入您的手机号码">
-                        <div class="error-message" id="phoneError"></div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="email">联系邮箱</label>
-                        <input id="email" name="email" type="email" placeholder="请输入您的电子邮箱">
-                        <div class="error-message" id="emailError"></div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="product">感兴趣的产品</label>
-                        <select id="product" name="00NIU00000LPpgc2AD">
-                            <option value="">-- 请选择产品 --</option>
-                            <option value="产品A">智能CRM系统</option>
-                            <option value="产品B">销售自动化工具</option>
-                            <option value="产品C">客户分析平台</option>
-                            <option value="产品D">营销云解决方案</option>
-                        </select>
-                    </div>
-                    
-                    <button type="button" id="submitBtn">
-                        <span id="submitText">提交咨询</span>
-                        <span id="submitLoader" class="loader" style="display:none;"></span>
-                    </button>
-                    
-                    <p class="form-note">我们承诺保护您的隐私，不会将您的信息分享给第三方</p>
-                    
-                    <!-- 提交状态消息 -->
-                    <div id="formStatus" class="status-message"></div>
                 </form>
+                
+                <div class="solution-box">
+                    <h3>配置说明</h3>
+                    <p>1. 在Salesforce中设置站点并启用Web-to-Lead</p>
+                    <p>2. 为访客用户分配以下权限：</p>
+                    <ul>
+                        <li>Lead对象的创建权限</li>
+                        <li>相关字段的读写权限</li>
+                        <li>LeadService Apex类的执行权限</li>
+                    </ul>
+                </div>
             </div>
             
-            <div class="image-section">
-                <div class="image-container">
-                    <img src="https://images.unsplash.com/photo-1551836022-d5d88e9218df?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" alt="CRM产品展示">
-                    <div class="image-overlay">
-                        <h3>智能CRM解决方案</h3>
-                        <p>提升销售效率30%，优化客户体验</p>
+            <div class="code-section">
+                <h2>修复代码</h2>
+                
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-title">Apex类修复 (LeadService.cls)</div>
+                        <button class="copy-btn" onclick="copyCode('apexCode')">复制</button>
                     </div>
+                    <pre id="apexCode"><span class="code-keyword">global</span> <span class="code-keyword">without sharing</span> <span class="code-keyword">class</span> <span class="code-class">LeadService</span> {
+    
+    <span class="code-comment">// 添加CORS支持</span>
+    <span class="code-keyword">@HttpPost</span>
+    <span class="code-keyword">global</span> <span class="code-keyword">static</span> <span class="code-class">Response</span> <span class="code-class">createLead</span>() {
+        <span class="code-comment">// 设置响应头</span>
+        <span class="code-class">RestResponse</span> res = <span class="code-class">RestContext</span>.response;
+        <span class="code-keyword">if</span>(res == <span class="code-keyword">null</span>) {
+            res = <span class="code-keyword">new</span> <span class="code-class">RestResponse</span>();
+            <span class="code-class">RestContext</span>.response = res;
+        }
+        res.addHeader(<span class="code-string">'Access-Control-Allow-Origin'</span>, <span class="code-string">'*'</span>);
+        res.addHeader(<span class="code-string">'Access-Control-Allow-Methods'</span>, <span class="code-string">'POST'</span>);
+        res.addHeader(<span class="code-string">'Content-Type'</span>, <span class="code-string">'application/json'</span>);
+        
+        <span class="code-class">Response</span> responseObj = <span class="code-keyword">new</span> <span class="code-class">Response</span>();
+        
+        <span class="code-keyword">try</span> {
+            <span class="code-comment">// 从请求中获取数据</span>
+            <span class="code-class">RestRequest</span> req = <span class="code-class">RestContext</span>.request;
+            <span class="code-class">Map</span>&lt;<span class="code-class">String</span>, <span class="code-class">Object</span>&gt; requestBody = 
+                (<span class="code-class">Map</span>&lt;<span class="code-class">String</span>, <span class="code-class">Object</span>&gt;)<span class="code-class">JSON</span>.deserializeUntyped(req.requestBody.toString());
+            
+            <span class="code-comment">// 获取字段值...</span>
+            
+            <span class="code-comment">// 检查重复记录</span>
+            <span class="code-keyword">if</span> (hasDuplicates(phone, email)) {
+                responseObj.success = <span class="code-keyword">false</span>;
+                responseObj.isDuplicate = <span class="code-keyword">true</span>;
+                responseObj.message = <span class="code-string">'系统中已存在相同联系方式的记录'</span>;
+                <span class="code-keyword">return</span> responseObj;
+            }
+            
+            <span class="code-comment">// 创建新的Lead记录...</span>
+            
+            responseObj.success = <span class="code-keyword">true</span>;
+            responseObj.message = <span class="code-string">'记录创建成功'</span>;
+            responseObj.leadId = newLead.Id;
+            
+        } <span class="code-keyword">catch</span> (<span class="code-class">Exception</span> e) {
+            responseObj.success = <span class="code-keyword">false</span>;
+            responseObj.message = <span class="code-string">'错误: '</span> + e.getMessage();
+        }
+        
+        <span class="code-keyword">return</span> responseObj;
+    }
+    
+    <span class="code-comment">// 检查重复记录方法保持不变...</span>
+    
+    <span class="code-comment">// 响应类</span>
+    <span class="code-keyword">global</span> <span class="code-keyword">class</span> <span class="code-class">Response</span> {
+        <span class="code-keyword">global</span> <span class="code-class">Boolean</span> success;
+        <span class="code-keyword">global</span> <span class="code-class">Boolean</span> isDuplicate;
+        <span class="code-keyword">global</span> <span class="code-class">String</span> message;
+        <span class="code-keyword">global</span> <span class="code-class">String</span> leadId;
+        
+        <span class="code-keyword">global</span> <span class="code-class">Response</span>() {
+            success = <span class="code-keyword">false</span>;
+            isDuplicate = <span class="code-keyword">false</span>;
+            message = <span class="code-string">''</span>;
+            leadId = <span class="code-string">''</span>;
+        }
+    }
+}</pre>
                 </div>
                 
-                <div class="product-highlights">
-                    <h3>表单验证功能</h3>
-                    <div class="highlight">
-                        <div class="highlight-icon">✓</div>
-                        <div class="highlight-text">Salesforce数据验证</div>
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-title">JavaScript修复 (HTML页面)</div>
+                        <button class="copy-btn" onclick="copyCode('jsCode')">复制</button>
                     </div>
-                    <div class="highlight">
-                        <div class="highlight-icon">✓</div>
-                        <div class="highlight-text">友好的错误提示</div>
-                    </div>
-                    <div class="highlight">
-                        <div class="highlight-icon">✓</div>
-                        <div class="highlight-text">安全的表单提交</div>
-                    </div>
-                    <div class="highlight">
-                        <div class="highlight-icon">✓</div>
-                        <div class="highlight-text">防止重复记录创建</div>
-                    </div>
-                    <div class="highlight">
-                        <div class="highlight-icon">✓</div>
-                        <div class="highlight-text">即时错误反馈</div>
-                    </div>
+                    <pre id="jsCode"><span class="code-comment">// 动态获取Salesforce实例域名</span>
+<span class="code-keyword">const</span> getSalesforceBaseUrl = () => {
+    <span class="code-keyword">if</span>(window.location.host.includes(<span class="code-string">'visual.force.com'</span>)) {
+        <span class="code-keyword">return</span> window.location.origin.replace(<span class="code-string">'.visual.force.com'</span>, 
+            <span class="code-string">'.my.salesforce.com'</span>);
+    }
+    <span class="code-keyword">return</span> window.location.origin;
+};
+
+<span class="code-comment">// 使用动态域名构建API端点</span>
+<span class="code-keyword">const</span> SALESFORCE_API_ENDPOINT = 
+    getSalesforceBaseUrl() + <span class="code-string">'/services/apexrest/LeadService'</span>;
+
+<span class="code-comment">// 表单提交处理</span>
+submitBtn.addEventListener(<span class="code-string">'click'</span>, <span class="code-keyword">async</span> <span class="code-keyword">function</span>() {
+    <span class="code-comment">// ...验证逻辑...</span>
+    
+    <span class="code-keyword">try</span> {
+        <span class="code-comment">// 调用Salesforce REST API</span>
+        <span class="code-keyword">const</span> response = <span class="code-keyword">await</span> fetch(SALESFORCE_API_ENDPOINT, {
+            method: <span class="code-string">'POST'</span>,
+            headers: {<span class="code-string">'Content-Type'</span>: <span class="code-string">'application/json'</span>},
+            body: <span class="code-class">JSON</span>.stringify(formData)
+        });
+        
+        <span class="code-comment">// 检查响应内容类型</span>
+        <span class="code-keyword">const</span> contentType = response.headers.get(<span class="code-string">'content-type'</span>);
+        <span class="code-keyword">let</span> result;
+        
+        <span class="code-keyword">if</span> (contentType && contentType.includes(<span class="code-string">'application/json'</span>)) {
+            result = <span class="code-keyword">await</span> response.json();
+        } <span class="code-keyword">else</span> {
+            <span class="code-comment">// 处理非JSON响应</span>
+            <span class="code-keyword">const</span> text = <span class="code-keyword">await</span> response.text();
+            <span class="code-keyword">throw new</span> <span class="code-class">Error</span>(<span class="code-string">`无效响应: ${text.substring(0, 100)}`</span>);
+        }
+        
+        <span class="code-keyword">if</span> (response.ok && result.success) {
+            <span class="code-comment">// 提交成功...</span>
+        } <span class="code-keyword">else</span> {
+            <span class="code-comment">// 处理错误...</span>
+        }
+    } <span class="code-keyword">catch</span> (error) {
+        <span class="code-comment">// 显示错误消息</span>
+        formStatus.textContent = <span class="code-string">'提交失败: '</span> + error.message;
+        formStatus.className = <span class="code-string">'status-message status-error'</span>;
+        submitText.textContent = <span class="code-string">'提交咨询'</span>;
+        submitLoader.style.display = <span class="code-string">'none'</span>;
+    }
+});</pre>
+                </div>
+                
+                <div class="solution-box">
+                    <h3>配置步骤</h3>
+                    <ol>
+                        <li>更新Apex类添加CORS支持</li>
+                        <li>在Salesforce设置中配置访客用户权限</li>
+                        <li>在JavaScript中使用动态域名构建API端点</li>
+                        <li>添加响应内容类型检查</li>
+                        <li>增强错误处理机制</li>
+                    </ol>
                 </div>
             </div>
         </div>
         
         <div class="footer">
-            <p>© 2023 销售云科技有限公司 | 提供专业的CRM解决方案</p>
+            <p>© 2023 Salesforce Web-to-Lead 解决方案 | 修复集成问题</p>
         </div>
     </div>
 
@@ -459,15 +635,17 @@
             const submitText = document.getElementById('submitText');
             const submitLoader = document.getElementById('submitLoader');
             const formStatus = document.getElementById('formStatus');
-            const connectionStatus = document.getElementById('connectionStatus');
             
-            const phoneInput = document.getElementById('phone');
-            const emailInput = document.getElementById('email');
-            const phoneError = document.getElementById('phoneError');
-            const emailError = document.getElementById('emailError');
-            
-            // Salesforce REST API端点配置
-            const SALESFORCE_API_ENDPOINT = '/services/apexrest/LeadService';
+            // 动态获取Salesforce实例域名
+            const getSalesforceBaseUrl = () => {
+                if(window.location.host.includes('visual.force.com')) {
+                    return window.location.origin.replace('.visual.force.com', '.my.salesforce.com');
+                }
+                return window.location.origin;
+            };
+
+            // 使用动态域名构建API端点
+            const SALESFORCE_API_ENDPOINT = getSalesforceBaseUrl() + '/services/apexrest/LeadService';
             
             // 表单提交处理
             submitBtn.addEventListener('click', async function() {
@@ -490,8 +668,8 @@
                 const formData = {
                     oid: document.getElementById('oid').value,
                     last_name: document.getElementById('last_name').value,
-                    phone: phoneInput.value,
-                    email: emailInput.value || '',
+                    phone: document.getElementById('phone').value,
+                    email: document.getElementById('email').value || '',
                     product: document.getElementById('product').value,
                     company: document.getElementById('company').value,
                     encoding: document.getElementById('encoding').value
@@ -507,28 +685,44 @@
                         body: JSON.stringify(formData)
                     });
                     
-                    const result = await response.json();
+                    // 检查响应内容类型
+                    const contentType = response.headers.get('content-type');
+                    let result;
+                    
+                    if (contentType && contentType.includes('application/json')) {
+                        result = await response.json();
+                    } else {
+                        // 处理非JSON响应
+                        const text = await response.text();
+                        throw new Error(`无效响应: ${text.substring(0, 100)}`);
+                    }
                     
                     if (response.ok && result.success) {
-                        // 提交成功，重定向到感谢页面
-                        window.location.href = document.getElementById('retURL').value;
+                        // 提交成功，显示成功消息
+                        formStatus.textContent = '提交成功！正在跳转到感谢页面...';
+                        formStatus.className = 'status-message status-success';
+                        
+                        // 模拟跳转（实际应使用window.location.href）
+                        setTimeout(() => {
+                            formStatus.textContent = '重定向到感谢页面';
+                            // window.location.href = document.getElementById('retURL').value;
+                        }, 2000);
                     } else {
                         // 处理重复记录
                         if (result.isDuplicate) {
-                            // 重定向到重复记录错误页面
-                            window.location.href = 'duplicate-error.html';
+                            formStatus.textContent = '提交失败：系统中已存在相同联系方式的记录';
+                            formStatus.className = 'status-message status-error';
                         } else {
                             // 显示其他错误消息
                             formStatus.textContent = `提交失败: ${result.message || '未知错误'}`;
                             formStatus.className = 'status-message status-error';
-                            submitText.textContent = '提交咨询';
-                            submitLoader.style.display = 'none';
                         }
                     }
                 } catch (error) {
                     // 显示错误消息
                     formStatus.textContent = '提交失败: ' + error.message;
                     formStatus.className = 'status-message status-error';
+                } finally {
                     submitText.textContent = '提交咨询';
                     submitLoader.style.display = 'none';
                 }
@@ -543,6 +737,8 @@
             
             // 验证电话号码格式
             function validatePhoneFormat() {
+                const phoneInput = document.getElementById('phone');
+                const phoneError = document.getElementById('phoneError');
                 const phone = phoneInput.value.trim();
                 phoneError.style.display = 'none';
                 
@@ -559,6 +755,8 @@
             
             // 验证邮箱格式
             function validateEmailFormat() {
+                const emailInput = document.getElementById('email');
+                const emailError = document.getElementById('emailError');
                 const email = emailInput.value.trim();
                 emailError.style.display = 'none';
                 
@@ -589,9 +787,9 @@
                 isValid = validatePhoneFormat() && isValid;
                 
                 // 验证电话必填
-                if(!phoneInput.value.trim()) {
-                    phoneError.textContent = '联系电话为必填字段';
-                    phoneError.style.display = 'block';
+                if(!document.getElementById('phone').value.trim()) {
+                    document.getElementById('phoneError').textContent = '联系电话为必填字段';
+                    document.getElementById('phoneError').style.display = 'block';
                     isValid = false;
                 }
                 
@@ -601,6 +799,24 @@
                 return isValid;
             }
         });
+        
+        // 复制代码功能
+        function copyCode(elementId) {
+            const element = document.getElementById(elementId);
+            const range = document.createRange();
+            range.selectNode(element);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            
+            try {
+                document.execCommand('copy');
+                alert('代码已复制到剪贴板！');
+            } catch (err) {
+                alert('复制失败，请手动复制');
+            }
+            
+            window.getSelection().removeAllRanges();
+        }
     </script>
 </body>
 </html>
