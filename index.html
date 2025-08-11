@@ -418,7 +418,7 @@
             <div class="form-section">
                 <form id="leadForm">
                     <input type="hidden" id="oid" value="00DIU000002NTsf">
-                    <input type="hidden" id="retURL" value="thank-you.html">
+                    <input type="hidden" id="retURL" value="https://davidcapcap.github.io/thank-you.html">
                     <input type="hidden" id="encoding" value="UTF-8">
                     <input type="hidden" id="company" value="网站客户">
                     
@@ -638,8 +638,8 @@ submitBtn.addEventListener(<span class="code-string">'click'</span>, <span class
             
             // 动态获取Salesforce实例域名
             const getSalesforceBaseUrl = () => {
-                if(window.location.host.includes('visual.force.com')) {
-                    return window.location.origin.replace('.visual.force.com', '.my.salesforce.com');
+                if(window.location.host.includes('lightning.force.com')) {
+                    return window.location.origin.replace('.lightning.force.com', '.my.salesforce.com');
                 }
                 return window.location.origin;
             };
