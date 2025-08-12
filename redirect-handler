@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script>
+        // 从URL参数中获取Salesforce重定向指令
+        const params = new URLSearchParams(window.location.search);
+        const redirectUrl = params.get('redirectUrl');
+        
+        if (redirectUrl) {
+            window.location.href = redirectUrl;
+        } else {
+            window.location.href = 'error.html'; // 异常处理
+        }
+    </script>
+</head>
+<body>
+    <p>处理中...</p>
+</body>
+</html>
