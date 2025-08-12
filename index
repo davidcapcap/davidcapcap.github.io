@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>产品咨询</title>
+</head>
+<body>
+    <form action="https://webto.salesforce.com/servlet/servlet.WebToLead?encoding=UTF-8" method="POST">
+        <input type="hidden" name="oid" value="00DIU000002NTsf">
+        <input type="hidden" name="retURL" value="https://davidcapcap.github.io//redirect-handler.html">
+        
+        <label>姓名：</label>
+        <input type="text" name="first_name" required>
+        <input type="text" name="last_name" required><br>
+        
+        <label>电话：</label>
+        <input type="tel" name="phone" required><br>
+        
+        <label>邮箱：</label>
+        <input type="email" name="email" required><br>
+        
+        <label>感兴趣产品：</label>
+        <select name="00NIU00000LPpgc2AD" required> <!-- 替换为实际字段ID -->
+            <option value="Product A">产品A</option>
+            <option value="Product B">产品B</option>
+        </select><br>
+        
+        <input type="hidden" name="company" value="Web Lead"> <!-- 必填字段 -->
+        
+        <input type="submit" value="提交">
+    </form>
+</body>
+</html>
