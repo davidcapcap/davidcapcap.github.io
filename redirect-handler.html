@@ -1,19 +1,27 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <script>
-        // 从URL参数中获取Salesforce重定向指令
-        const params = new URLSearchParams(window.location.search);
-        const redirectUrl = params.get('redirectUrl');
-        
-        if (redirectUrl) {
-            window.location.href = redirectUrl;
-        } else {
-            window.location.href = 'error.html'; // 异常处理
-        }
-    </script>
-</head>
+<!-- redirect-handler.html -->
+<script>
+// 捕获URL参数用于调试
+const params = new URLSearchParams(window.location.search);
+const debugData = {
+    leadId: params.get('id'),
+    redirectUrl: params.get('redirectUrl'),
+    allParams: Array.from(params.entries())
+};
+
+// 显示调试面板
+document.getElementById('debug-info').innerText = JSON.stringify(debugData, null, 2);
+
+// 如果有重定向URL则跳转
+if(debugData.redirectUrl) {
+    setTimeout(() => {
+        window.location.href = debugData.redirectUrl;
+    }, 5000); // 5秒延迟便于查看调试信息
+}
+</script>
+
 <body>
-    <p>处理中...</p>
+    <h1>处理中，请稍候...</h1>
+    <h2>调试信息：</h2>
+    <pre id="debug-info"></pre>
+    <p>5秒后自动跳转，或<a href="#" onclick="window.location.href=debugData.redirectUrl">立即跳转</a></p>
 </body>
-</html>
