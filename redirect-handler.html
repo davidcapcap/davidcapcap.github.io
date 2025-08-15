@@ -1,27 +1,284 @@
-<!-- redirect-handler.html -->
-<script>
-// 捕获URL参数用于调试
-const params = new URLSearchParams(window.location.search);
-const debugData = {
-    leadId: params.get('id'),
-    redirectUrl: params.get('redirectUrl'),
-    allParams: Array.from(params.entries())
-};
-
-// 显示调试面板
-document.getElementById('debug-info').innerText = JSON.stringify(debugData, null, 2);
-
-// 如果有重定向URL则跳转
-if(debugData.redirectUrl) {
-    setTimeout(() => {
-        window.location.href = debugData.redirectUrl;
-    }, 5000); // 5秒延迟便于查看调试信息
-}
-</script>
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>重定向处理器</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(120deg, #1a2a6c, #b21f1f, #fdbb2d);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            line-height: 1.6;
+        }
+        
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .container {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #4facfe;
+        }
+        
+        .status {
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+        }
+        
+        .status p {
+            font-size: 1.2rem;
+            margin: 15px 0;
+        }
+        
+        .countdown {
+            display: inline-block;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ff9a9e;
+            margin: 0 5px;
+            min-width: 50px;
+        }
+        
+        .redirect-info {
+            background: rgba(52, 152, 219, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 25px 0;
+            text-align: left;
+            word-break: break-all;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin: 20px 10px;
+            transition: all 0.4s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .debug-panel {
+            background: rgba(44, 62, 80, 0.9);
+            color: #ecf0f1;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            text-align: left;
+            max-height: 300px;
+            overflow: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+        }
+        
+        .error-message {
+            background: rgba(248, 215, 218, 0.2);
+            color: #ff6b6b;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 25px 0;
+            display: none;
+        }
+        
+        .loader {
+            display: inline-block;
+            width: 80px;
+            height: 80px;
+            margin: 20px auto;
+        }
+        
+        .loader:after {
+            content: " ";
+            display: block;
+            width: 64px;
+            height: 64px;
+            margin: 8px;
+            border-radius: 50%;
+            border: 6px solid #4facfe;
+            border-color: #4facfe transparent #4facfe transparent;
+            animation: loader 1.2s linear infinite;
+        }
+        
+        @keyframes loader {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                width: 95%;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .btn {
+                padding: 12px 30px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
 <body>
-    <h1>处理中，请稍候...</h1>
-    <h2>调试信息：</h2>
-    <pre id="debug-info"></pre>
-    <p>5秒后自动跳转，或<a href="#" onclick="window.location.href=debugData.redirectUrl">立即跳转</a></p>
+    <div class="container">
+        <h1>🚀 正在处理您的请求</h1>
+        
+        <div class="loader"></div>
+        
+        <div class="status">
+            <p>将在 <span id="countdown" class="countdown">5</span> 秒后自动重定向</p>
+            <p>请勿关闭本页面</p>
+        </div>
+        
+        <div class="redirect-info">
+            <p><strong>目标页面：</strong></p>
+            <p id="redirectLink">正在获取重定向信息...</p>
+        </div>
+        
+        <a id="manualRedirect" class="btn">
+            立即跳转
+        </a>
+        
+        <div id="errorMessage" class="error-message">
+            <h3>⚠️ 发生错误</h3>
+            <p>无法获取有效的重定向URL</p>
+            <p id="errorDetail"></p>
+            <a href="index.html" class="btn" style="background: linear-gradient(to right, #ff9a9e 0%, #fad0c4 100%);">
+                返回表单
+            </a>
+        </div>
+        
+        <div id="debugInfo" class="debug-panel">
+            <!-- 调试信息将在这里显示 -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const params = new URLSearchParams(window.location.search);
+            const redirectUrl = params.get('redirectUrl');
+            const leadId = params.get('leadId');
+            const debug = params.get('debug') === 'true';
+            
+            // 显示调试面板
+            const debugInfoEl = document.getElementById('debugInfo');
+            if (debug) {
+                debugInfoEl.style.display = 'block';
+                
+                let debugContent = `=== 重定向调试信息 ===
+时间: ${new Date().toLocaleString()}
+完整URL: ${window.location.href}
+参数列表:`;
+                
+                for (const [key, value] of params.entries()) {
+                    debugContent += `\n  ${key}: ${value}`;
+                }
+                
+                debugInfoEl.textContent = debugContent;
+            } else {
+                debugInfoEl.style.display = 'none';
+            }
+            
+            // 获取页面元素
+            const redirectLinkEl = document.getElementById('redirectLink');
+            const manualRedirectEl = document.getElementById('manualRedirect');
+            const errorMessageEl = document.getElementById('errorMessage');
+            const errorDetailEl = document.getElementById('errorDetail');
+            const countdownEl = document.getElementById('countdown');
+            
+            // 验证重定向URL
+            if (redirectUrl && isValidUrl(redirectUrl)) {
+                console.log("有效重定向URL:", redirectUrl);
+                
+                // 更新UI
+                redirectLinkEl.textContent = redirectUrl;
+                redirectLinkEl.href = redirectUrl;
+                manualRedirectEl.href = redirectUrl;
+                
+                // 设置自动重定向
+                let count = 5;
+                countdownEl.textContent = count;
+                
+                const timer = setInterval(() => {
+                    count--;
+                    countdownEl.textContent = count;
+                    
+                    if (count <= 0) {
+                        clearInterval(timer);
+                        console.log("执行自动重定向");
+                        window.location.href = redirectUrl;
+                    }
+                }, 1000);
+                
+            } else {
+                console.error("无效的重定向URL:", redirectUrl);
+                
+                // 显示错误信息
+                errorMessageEl.style.display = 'block';
+                errorDetailEl.textContent = `原因: ${redirectUrl ? 'URL格式无效' : '缺少重定向参数'}`;
+                
+                // 更新调试信息
+                if (debug) {
+                    debugInfoEl.textContent += `\n\n错误: 无效的重定向URL - ${redirectUrl || '空'}`;
+                }
+            }
+        });
+        
+        // URL验证函数
+        function isValidUrl(url) {
+            try {
+                new URL(url);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+    </script>
 </body>
+</html>
