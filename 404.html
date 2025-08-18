@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>重定向处理</title>
+    <script>
+        // 解析重定向规则
+        const redirectRules = [
+            { from: '/redirect-handler.html', to: '/thankyou.html' }
+        ];
+        
+        // 处理重定向
+        const handleRedirect = () => {
+            const path = window.location.pathname;
+            const params = new URLSearchParams(window.location.search);
+            
+            // 1. 处理带参数的重定向
+            if (path === '/redirect-handler.html') {
+                const redirectUrl = params.get('redirectUrl');
+                if (redirectUrl && isValidUrl(redirectUrl)) {
+                    window.location.href = redirectUrl;
+                    return;
+                }
+            }
+            
+            // 2. 处理基本重定向
+            for (const rule of redirectRules) {
+                if (path === rule.from) {
+                    window.location.href = rule.to;
+                    return;
+                }
+            }
+            
+            // 3. 显示404页面
+            document.getElementById('404-content').style.display = 'block';
+        };
+        
+        // URL验证
+        function isValidUrl(url) {
+            try {
+                new URL(url);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+        
+        // 页面加载后执行
+        window.addEventListener('DOMContentLoaded', handleRedirect);
+    </script>
+    <style>
+        /* 样式与前文相同 */
+    </style>
+</head>
+<body>
+    <!-- 内容与前文相同 -->
+</body>
+</html>
