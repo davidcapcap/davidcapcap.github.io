@@ -1,0 +1,5 @@
+# 基本重定向规则
+/redirect-handler.html    /thankyou.html    302
+
+# 带参数的重定向规则
+/redirect-handler.html?redirectUrl=:url   /:url  302
